@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -10,7 +11,7 @@ import {
   FiRefreshCw,
 } from "react-icons/fi";
 
-export default function FailPage() {
+function FailPageContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("bookingId");
 
@@ -27,6 +28,7 @@ export default function FailPage() {
 
     let cancelled = false;
     let attempts = 0;
+    let timer = null;
 
     const verifyBooking = async () => {
       try {
@@ -75,7 +77,7 @@ export default function FailPage() {
         // If callback has not finished updating MongoDB yet,
         // give it a few seconds and check again.
         if (attempts < 10) {
-          setTimeout(verifyBooking, 2000);
+          timer = setTimeout(verifyBooking, 2000);
           return;
         }
 
@@ -87,7 +89,7 @@ export default function FailPage() {
         if (cancelled) return;
 
         if (attempts < 10) {
-          setTimeout(verifyBooking, 2000);
+          timer = setTimeout(verifyBooking, 2000);
           return;
         }
 
@@ -103,6 +105,10 @@ export default function FailPage() {
 
     return () => {
       cancelled = true;
+
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
   }, [bookingId]);
 
@@ -233,7 +239,7 @@ export default function FailPage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
-              href="/#apartments"
+              href="/#apartment"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#11110f] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
               <FiRefreshCw className="h-4 w-4" />
@@ -251,5 +257,31 @@ export default function FailPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function FailPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#f5f4f0] px-4 py-10 text-[#11110f]">
+          <div className="mx-auto flex min-h-[80vh] max-w-xl items-center justify-center">
+            <div className="w-full rounded-3xl bg-white p-8 text-center shadow-sm sm:p-12">
+              <FiLoader className="mx-auto h-8 w-8 animate-spin" />
+
+              <h1 className="mt-6 text-2xl font-semibold">
+                Verifying payment
+              </h1>
+
+              <p className="mt-3 text-sm text-black/55">
+                Please wait while we verify your booking status.
+              </p>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <FailPageContent />
+    </Suspense>
   );
 }
