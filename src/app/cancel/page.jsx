@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -9,7 +10,7 @@ import {
   FiLoader,
 } from "react-icons/fi";
 
-export default function CancelPage() {
+function CancelPageContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("bookingId");
 
@@ -26,6 +27,7 @@ export default function CancelPage() {
 
     let cancelled = false;
     let attempts = 0;
+    let timer = null;
 
     const verifyBooking = async () => {
       try {
@@ -73,7 +75,7 @@ export default function CancelPage() {
         }
 
         if (attempts < 10) {
-          setTimeout(verifyBooking, 2000);
+          timer = setTimeout(verifyBooking, 2000);
           return;
         }
 
@@ -85,7 +87,7 @@ export default function CancelPage() {
         if (cancelled) return;
 
         if (attempts < 10) {
-          setTimeout(verifyBooking, 2000);
+          timer = setTimeout(verifyBooking, 2000);
           return;
         }
 
@@ -101,6 +103,10 @@ export default function CancelPage() {
 
     return () => {
       cancelled = true;
+
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
   }, [bookingId]);
 
@@ -229,27 +235,12 @@ export default function CancelPage() {
           )}
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-<Link
-  href="/#apartments"
-  className="
-    inline-flex
-    items-center
-    justify-center
-    rounded-xl
-    border
-    border-black/10
-    bg-[#f2f0e9]
-    px-5
-    py-3
-    text-sm
-    font-semibold
-    text-[#11110f]
-    transition
-    hover:bg-white
-  "
->
-  Browse apartments
-</Link>
+            <Link
+              href="/#apartment"
+              className="inline-flex items-center justify-center rounded-xl border border-black/10 bg-[#f2f0e9] px-5 py-3 text-sm font-semibold text-[#11110f] transition hover:bg-white"
+            >
+              Browse apartments
+            </Link>
 
             <Link
               href="/"
@@ -262,5 +253,31 @@ export default function CancelPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function CancelPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#f5f4f0] px-4 py-10 text-[#11110f]">
+          <div className="mx-auto flex min-h-[80vh] max-w-xl items-center justify-center">
+            <div className="w-full rounded-3xl bg-white p-8 text-center shadow-sm sm:p-12">
+              <FiLoader className="mx-auto h-8 w-8 animate-spin" />
+
+              <h1 className="mt-6 text-2xl font-semibold">
+                Verifying booking
+              </h1>
+
+              <p className="mt-3 text-sm text-black/55">
+                Please wait while we verify your payment status.
+              </p>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <CancelPageContent />
+    </Suspense>
   );
 }
