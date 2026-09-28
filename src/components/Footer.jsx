@@ -8,14 +8,18 @@ const FOOTER_LINKS = [
   { label: "Contact", href: "/#contact" },
 ];
 
+const CONTACT = {
+  address: "Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka",
+  phone: "+880 0000 000000",
+  email: "hello@thakben.com",
+};
+
 export default function Footer() {
   return (
     <footer className="bg-black text-white">
       <div className="mx-auto max-w-7xl px-6 py-16">
-
         {/* Main Footer */}
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
-
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link
@@ -33,56 +37,48 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-sm font-semibold">
-              Explore
-            </h3>
+            <h3 className="text-sm font-semibold">Explore</h3>
 
-            <div className="mt-5 flex flex-col gap-3">
-              {FOOTER_LINKS.map((link) => (
+            <nav className="mt-5 flex flex-col gap-3">
+              {FOOTER_LINKS.map(({ label, href }) => (
                 <Link
-                  key={link.label}
-                  href={link.href}
+                  key={label}
+                  href={href}
                   className="w-fit text-sm text-white/50 transition-colors hover:text-white"
                 >
-                  {link.label}
+                  {label}
                 </Link>
               ))}
-            </div>
+            </nav>
           </div>
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold">
-              Contact
-            </h3>
+            <h3 className="text-sm font-semibold">Contact</h3>
 
             <div className="mt-5 flex flex-col gap-3 text-sm text-white/50">
-              <p>Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka</p>
+              <p>{CONTACT.address}</p>
 
               <a
-                href="tel:+8800000000000"
+                href={`tel:${CONTACT.phone.replace(/\s/g, "")}`}
                 className="transition-colors hover:text-white"
               >
-                +880 0000 000000
+                {CONTACT.phone}
               </a>
 
               <a
-                href="mailto:hello@thakben.com"
+                href={`mailto:${CONTACT.email}`}
                 className="transition-colors hover:text-white"
               >
-                hello@thakben.com
+                {CONTACT.email}
               </a>
             </div>
           </div>
-
         </div>
 
         {/* Bottom */}
         <div className="mt-16 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
-
-          <p>
-            © {new Date().getFullYear()} Thakben. All rights reserved.
-          </p>
+          <p>© {new Date().getFullYear()} Thakben. All rights reserved.</p>
 
           <div className="flex gap-5">
             <Link
@@ -99,9 +95,7 @@ export default function Footer() {
               Terms
             </Link>
           </div>
-
         </div>
-
       </div>
     </footer>
   );

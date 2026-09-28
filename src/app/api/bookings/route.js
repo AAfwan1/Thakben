@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -73,7 +72,8 @@ function parseDateOnly(value) {
 }
 
 function calculateDays(checkIn, checkOut) {
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const millisecondsPerDay =
+    24 * 60 * 60 * 1000;
 
   return Math.round(
     (checkOut.getTime() - checkIn.getTime()) /
@@ -132,7 +132,8 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid check-in or check-out date",
+          message:
+            "Invalid check-in or check-out date",
         },
         { status: 400 }
       );
@@ -156,7 +157,8 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Check-in date cannot be in the past",
+          message:
+            "Check-in date cannot be in the past",
         },
         { status: 400 }
       );
@@ -177,7 +179,10 @@ export async function POST(request) {
     // CALCULATE DAYS ON SERVER
     // ---------------------------------------------------
 
-    const days = calculateDays(checkIn, checkOut);
+    const days = calculateDays(
+      checkIn,
+      checkOut
+    );
 
     if (!Number.isInteger(days) || days < 1) {
       return NextResponse.json(
@@ -271,7 +276,8 @@ export async function POST(request) {
     // CALCULATE TOTAL ON SERVER
     // ---------------------------------------------------
 
-    const totalPrice = days * pricePerDay;
+    const totalPrice =
+      days * pricePerDay;
 
     if (
       !Number.isSafeInteger(totalPrice) ||
@@ -286,21 +292,6 @@ export async function POST(request) {
       );
     }
 
-    // ---------------------------------------------------
-    // CHECK ADMIN-MARKED UNAVAILABLE DATES
-    // ---------------------------------------------------
-    //
-    // Admin can manually block individual dates.
-    //
-    // Booking:
-    //   2026-09-20 → 2026-09-25
-    //
-    // Checks:
-    //   20, 21, 22, 23, 24
-    //
-    // Checkout date itself is not occupied.
-    //
-    // ---------------------------------------------------
 
     const unavailableDate =
       await UnavailableDate.exists({
@@ -322,52 +313,6 @@ export async function POST(request) {
         { status: 409 }
       );
     }
-
-    // ---------------------------------------------------
-    // CHECK OVERLAPPING BOOKINGS
-    // ---------------------------------------------------
-    //
-    // Existing booking overlaps when:
-    //
-    // existing.checkIn < requested.checkOut
-    // AND
-    // existing.checkOut > requested.checkIn
-    //
-    // Cancelled bookings are ignored.
-    //
-    // ---------------------------------------------------
-
-    const overlappingBooking =
-      await Booking.exists({
-        apartmentId: apartment._id,
-
-        status: {
-          $in: ["pending", "confirmed"],
-        },
-
-        checkIn: {
-          $lt: checkOut,
-        },
-
-        checkOut: {
-          $gt: checkIn,
-        },
-      });
-
-    if (overlappingBooking) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "This apartment is already booked for the selected dates",
-        },
-        { status: 409 }
-      );
-    }
-
-    // ---------------------------------------------------
-    // CREATE BOOKING
-    // ---------------------------------------------------
 
     const booking = await Booking.create({
       apartmentId: apartment._id,
@@ -412,7 +357,8 @@ export async function POST(request) {
           totalPrice: booking.totalPrice,
 
           status: booking.status,
-          paymentStatus: booking.paymentStatus,
+          paymentStatus:
+            booking.paymentStatus,
         },
       },
       { status: 201 }

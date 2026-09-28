@@ -11,13 +11,11 @@ const PROPERTY = {
   name: "Thakben Apartments",
   location: "Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka",
   area: "250–600 sq ft",
-  facilities: [
-    "Swimming Pool",
-    "Gym",
-    "Parking",
-  ],
+  facilities: ["Swimming Pool", "Gym", "Parking"],
   phone: "+880 0000 000000",
 };
+
+const PHONE_LINK = `tel:${PROPERTY.phone.replace(/\s/g, "")}`;
 
 export default function Hero() {
   return (
@@ -25,7 +23,7 @@ export default function Hero() {
       aria-labelledby="hero-heading"
       className="relative min-h-screen overflow-hidden bg-[#11110f] text-[#f1f0eb]"
     >
-      {/* Background Image */}
+      {/* Background */}
       <div className="absolute inset-0">
         <Image
           src="/hero-apartment.jpg"
@@ -33,23 +31,19 @@ export default function Hero() {
           fill
           priority
           sizes="100vw"
+          quality={85}
           className="object-cover"
         />
       </div>
 
-      {/* Dark Overlay */}
+      {/* Overlays */}
       <div className="absolute inset-0 bg-black/45" />
-
-      {/* Left Gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
-
-      {/* Bottom Gradient */}
       <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
       {/* Content */}
       <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-end px-6 pb-8 pt-32 sm:px-8 lg:px-10 lg:pb-10">
         <div className="w-full">
-
           {/* Location */}
           <div className="mb-6 flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/25 backdrop-blur-md">
@@ -60,16 +54,14 @@ export default function Hero() {
               <p className="text-[9px] uppercase tracking-[0.25em] text-white/40">
                 Location
               </p>
-
               <p className="mt-0.5 text-sm font-medium text-white/80">
                 {PROPERTY.location}
               </p>
             </div>
           </div>
 
-          {/* Main Heading */}
+          {/* Heading */}
           <div className="max-w-4xl">
-
             <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-white/40">
               {PROPERTY.name}
             </p>
@@ -80,21 +72,17 @@ export default function Hero() {
             >
               A comfortable place
               <br />
-              <span className="text-white/55">
-                to call home.
-              </span>
+              <span className="text-white/55">to call home.</span>
             </h1>
 
             <p className="mt-7 max-w-xl text-sm leading-7 text-white/60 sm:text-base">
               Discover modern apartments designed around comfort,
               convenience, and everyday living in Dhaka.
             </p>
-
           </div>
 
           {/* Information Cards */}
           <div className="mt-10 grid gap-3 sm:grid-cols-3">
-
             {/* Area */}
             <div className="rounded-2xl border border-white/15 bg-black/30 p-5 backdrop-blur-xl">
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">
@@ -128,32 +116,27 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* Availability */}
+            {/* Contact & Location */}
+            <div className="rounded-2xl border border-white/15 bg-black/30 p-5 backdrop-blur-xl">
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">
+                Contact & Location
+              </p>
 
-<div className="rounded-2xl border border-white/15 bg-black/30 p-5 backdrop-blur-xl">
-  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/40">
-    Contact & Location
-  </p>
+              <p className="mt-2 text-xl font-medium tracking-tight text-white sm:text-2xl">
+                {PROPERTY.phone}
+              </p>
 
-  <p className="mt-2 text-xl font-medium tracking-tight text-white sm:text-2xl">
-    +880 0000 000000
-  </p>
-
-  <p className="mt-2 text-sm text-white/50">
-    Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka
-  </p>
-</div>
-
-
-
+              <p className="mt-2 text-sm text-white/50">
+                {PROPERTY.location}
+              </p>
+            </div>
           </div>
 
           {/* Bottom Row */}
           <div className="mt-6 flex flex-col gap-5 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-
             {/* Phone */}
             <a
-              href={`tel:${PROPERTY.phone.replace(/\s/g, "")}`}
+              href={PHONE_LINK}
               className="group flex w-fit items-center gap-3"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/25 backdrop-blur-md">
@@ -185,9 +168,7 @@ export default function Hero() {
                 />
               </span>
             </Link>
-
           </div>
-
         </div>
       </div>
     </section>
