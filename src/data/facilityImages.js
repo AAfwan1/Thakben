@@ -133,7 +133,7 @@ export const FACILITY_IMAGES = {
       "folder": "Others",
       "filename": "Photo_6553706_DJI_106_jpg_6732893_0_202266133742_photo_original.jpg.webp",
       "publicId": "thakben/facilities/Others/Photo_6553706_DJI_106_jpg_6732893_0_202266133742_photo_original.jpg",
-      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674022/thakben/facilities/Others/Photo_6553706_DJI_106_jpg_6732893_0_202266133742_photo_original.jpg.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674022/thakben/facilities/Others/Photo_6553706_DJI_106_jpg_6732893_0_202266133742_photo_original.jpg",
       "optimizedUrl": "https://res.cloudinary.com/qds5td8c/image/upload/f_auto,q_auto/thakben/facilities/Others/Photo_6553706_DJI_106_jpg_6732893_0_202266133742_photo_original.jpg"
     }
   ],
@@ -169,7 +169,7 @@ export const FACILITY_IMAGES = {
       "folder": "Swimming-pool",
       "filename": "Photo_6553697_DJI_97_jpg_8904885_0_202266133346_photo_original.jpg.webp",
       "publicId": "thakben/facilities/Swimming-pool/Photo_6553697_DJI_97_jpg_8904885_0_202266133346_photo_original.jpg",
-      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674027/thakben/facilities/Swimming-pool/Photo_6553697_DJI_97_jpg_8904885_0_202266133346_photo_original.jpg.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674027/thakben/facilities/Swimming-pool/Photo_6553697_DJI_97_jpg_8904885_0_202266133346_photo_original.jpg",
       "optimizedUrl": "https://res.cloudinary.com/qds5td8c/image/upload/f_auto,q_auto/thakben/facilities/Swimming-pool/Photo_6553697_DJI_97_jpg_8904885_0_202266133346_photo_original.jpg"
     },
     {
@@ -177,7 +177,7 @@ export const FACILITY_IMAGES = {
       "folder": "Swimming-pool",
       "filename": "Photo_6553701_DJI_101_jpg_7978356_0_202266133532_photo_original.jpg.webp",
       "publicId": "thakben/facilities/Swimming-pool/Photo_6553701_DJI_101_jpg_7978356_0_202266133532_photo_original.jpg",
-      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674029/thakben/facilities/Swimming-pool/Photo_6553701_DJI_101_jpg_7978356_0_202266133532_photo_original.jpg.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674029/thakben/facilities/Swimming-pool/Photo_6553701_DJI_101_jpg_7978356_0_202266133532_photo_original.jpg",
       "optimizedUrl": "https://res.cloudinary.com/qds5td8c/image/upload/f_auto,q_auto/thakben/facilities/Swimming-pool/Photo_6553701_DJI_101_jpg_7978356_0_202266133532_photo_original.jpg"
     },
     {
@@ -185,7 +185,7 @@ export const FACILITY_IMAGES = {
       "folder": "Swimming-pool",
       "filename": "Photo_6553708_DJI_108_jpg_7564913_0_20226613408_photo_original.jpg.webp",
       "publicId": "thakben/facilities/Swimming-pool/Photo_6553708_DJI_108_jpg_7564913_0_20226613408_photo_original.jpg",
-      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674030/thakben/facilities/Swimming-pool/Photo_6553708_DJI_108_jpg_7564913_0_20226613408_photo_original.jpg.jpg",
+      "cloudinaryUrl": "https://res.cloudinary.com/qds5td8c/image/upload/v1790674030/thakben/facilities/Swimming-pool/Photo_6553708_DJI_108_jpg_7564913_0_20226613408_photo_original.jpg",
       "optimizedUrl": "https://res.cloudinary.com/qds5td8c/image/upload/f_auto,q_auto/thakben/facilities/Swimming-pool/Photo_6553708_DJI_108_jpg_7564913_0_20226613408_photo_original.jpg"
     }
   ],
