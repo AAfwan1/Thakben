@@ -21,15 +21,11 @@ export default async function ApartmentsSection() {
         {/* Header */}
         <div className="flex flex-col gap-6 border-b border-black/10 pb-8 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/40">
-              Apartments
-            </p>
-
-            <h2 className="mt-3 max-w-2xl text-4xl font-medium tracking-[-0.04em] text-black sm:text-5xl">
-              Find a place that
-              <br />
-              feels like home.
+            <h2 className="text-2xl uppercase tracking-[0.15em] text-black">
+              Apartments Sizes
             </h2>
+
+
           </div>
 
           <p className="max-w-sm text-sm leading-6 text-black/50">

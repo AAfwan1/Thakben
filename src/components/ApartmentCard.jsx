@@ -114,7 +114,7 @@ export default function ApartmentCard({ apartment }) {
 
               <div className="mt-1">
                 <span className="text-2xl font-medium tracking-tight text-black">
-                  ৳{daily.toLocaleString()}
+                  ৳{daily.toLocaleString()} <span className="text-black/45">/day</span>
                 </span>
               </div>
             </div>

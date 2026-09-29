@@ -102,20 +102,19 @@ export default function FacilitiesSection() {
           {/* HEADER */}
           <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-blue-400">
+              <p className="mb-2 text-xl font-medium uppercase tracking-[0.25em] text-blue-400">
                 Facilities
               </p>
 
-              <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              {/* <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
                 Everything you need,
                 <br />
                 <span className="text-white/45">right at home.</span>
-              </h2>
+              </h2> */}
             </div>
 
             <p className="max-w-md text-sm leading-6 text-white/45">
-              Designed around comfort, convenience, wellness, and entertainment
-              — all within the Thakben community.
+              Visit the Checkpoint on 11th floor to experience our various paid amenities
             </p>
           </div>
 

@@ -12,7 +12,7 @@ const PROPERTY = {
   location: "Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka",
   area: "250–600 sq ft",
   facilities: ["Swimming Pool", "Gym", "Parking"],
-  phone: "+880 0000 000000",
+  phone: "+880 1678-090900",
 };
 
 const PHONE_LINK = `tel:${PROPERTY.phone.replace(/\s/g, "")}`;
@@ -62,17 +62,14 @@ export default function Hero() {
 
           {/* Heading */}
           <div className="max-w-4xl">
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.3em] text-white/40">
-              {PROPERTY.name}
-            </p>
 
             <h1
               id="hero-heading"
               className="text-5xl font-medium leading-[0.95] tracking-[-0.045em] sm:text-6xl md:text-7xl lg:text-[86px]"
             >
-              A comfortable place
+              Thakben
               <br />
-              <span className="text-white/55">to call home.</span>
+              <span className="text-white/55">Studio Apartments.</span>
             </h1>
 
             <p className="mt-7 max-w-xl text-sm leading-7 text-white/60 sm:text-base">
@@ -135,28 +132,10 @@ export default function Hero() {
           {/* Bottom Row */}
           <div className="mt-6 flex flex-col gap-5 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
             {/* Phone */}
-            <a
-              href={PHONE_LINK}
-              className="group flex w-fit items-center gap-3"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/25 backdrop-blur-md">
-                <FiPhone size={14} />
-              </span>
-
-              <span>
-                <span className="block text-[9px] uppercase tracking-[0.2em] text-white/35">
-                  Contact
-                </span>
-
-                <span className="mt-0.5 block text-sm text-white/75 transition group-hover:text-white">
-                  {PROPERTY.phone}
-                </span>
-              </span>
-            </a>
 
             {/* CTA */}
             <Link
-              href="/apartments"
+              href="/#apartments"
               className="group flex w-fit items-center gap-3 rounded-full border border-white/20 bg-black/35 px-5 py-3 text-sm font-medium text-white/85 backdrop-blur-xl transition hover:bg-black/50 hover:text-white"
             >
               Explore Apartments
