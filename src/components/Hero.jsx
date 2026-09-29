@@ -26,7 +26,7 @@ export default function Hero() {
       {/* Background */}
       <div className="absolute inset-0">
         <Image
-          src="/hero-apartment.jpg"
+          src="/hero-apartment.webp"
           alt="Thakben Apartments in Dhaka, Bangladesh"
           fill
           priority

@@ -13,7 +13,7 @@ export default function NotFound() {
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
-          src="/hero-apartment.jpg"
+          src="/hero-apartment.webp"
           alt=""
           fill
           priority
