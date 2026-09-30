@@ -11,11 +11,11 @@ import {
 const PROPERTY = {
   name: "Thakben Apartments",
   address: "Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka",
-  phone: "+880 0000 000000",
+  phone: "+880 1678-090900",
   mapUrl:
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3649.9448751428677!2d90.42469761206294!3d23.820559185987964!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755c700213ef523%3A0xcfc6ad954899221c!2sThe%20Checkpoint!5e0!3m2!1sen!2sbd!4v1788979737571!5m2!1sen!2sbd",
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d228.12166036522856!2d90.4272222414014!3d23.82049906981321!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755c648bee93953%3A0xb2b0e9ada4df27bd!2sMaati%20Properties%20Ltd.!5e0!3m2!1sen!2sbd!4v1790784248412!5m2!1sen!2sbd",
   directionsUrl:
-    "https://www.google.com/maps/dir/?api=1&destination=23.820559185987964,90.42469761206294",
+    "https://www.google.com/maps/dir/?api=1&destination=Maati+Properties+Ltd.%2C+Bashundhara+R%2FA%2C+Dhaka%2C+Bangladesh",
 };
 
 export default function MapSection() {

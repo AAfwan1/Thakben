@@ -33,33 +33,17 @@ export default function AdminNavbar() {
     <header className="fixed left-0 right-0 top-0 z-50 px-4 pt-4 sm:px-6">
       <nav className="mx-auto max-w-7xl">
         <div className="flex h-[68px] items-center justify-between rounded-full border border-black/[0.08] bg-black/60 px-3 shadow-[0_18px_60px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
-          {/* Logo */}
-          <Link
-            href="/admin"
-            onClick={() => setMenuOpen(false)}
-            className="group flex items-center gap-3 pl-2"
-          >
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#f2f0e9] shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-300 group-hover:scale-[1.03]">
-              <img
-                src="/logo.png"
-                alt="Thakben"
-                className="h-full w-full object-cover"
-              />
-            </div>
-
-            <div className="hidden leading-none sm:block">
-              <p className="text-[15px] font-semibold tracking-tight text-white">
-                Thakben
-              </p>
-
-              <div className="mt-1 flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#c9b88a]" />
-                <p className="text-[8px] font-medium uppercase tracking-[0.24em] text-white/40">
-                  Admin Panel
-                </p>
-              </div>
-            </div>
-          </Link>
+         {/* Logo */}
+<Link
+  href="/"
+  className="group flex items-center pl-2"
+>
+  <img
+    src="/logo.png"
+    alt="Thakben"
+    className="h-10 w-20 object-contain transition-opacity group-hover:opacity-85"
+  />
+</Link>
 
           {/* Desktop Navigation */}
           <div className="hidden items-center gap-1 md:flex">

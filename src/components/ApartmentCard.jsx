@@ -123,7 +123,7 @@ export default function ApartmentCard({ apartment }) {
               href={href}
               className="group/button flex h-10 items-center gap-2 rounded-full bg-black px-4 text-xs font-medium text-white transition-all duration-300 hover:bg-black/80"
             >
-              View Apartment
+              Book Apartment
 
               <FiArrowUpRight
                 size={14}

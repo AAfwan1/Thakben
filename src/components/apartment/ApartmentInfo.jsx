@@ -289,7 +289,7 @@ export default function ApartmentInfo({ apartment }) {
             Bathroom Facilities
           </h3>
 
-          <CompactList items={apartment.bathroom} />
+          <CompactList items={apartment.bathroomFacilities} />
 
         </div>
 

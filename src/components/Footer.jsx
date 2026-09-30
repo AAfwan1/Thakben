@@ -10,8 +10,8 @@ const FOOTER_LINKS = [
 
 const CONTACT = {
   address: "Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka",
-  phone: "+880 0000 000000",
-  email: "hello@thakben.com",
+  phone: "+880 1678-090900",
+  email: "thakben.bd@gmail.com",
 };
 
 export default function Footer() {

@@ -1,21 +1,18 @@
-
-import Image from "next/image";
 import Link from "next/link";
-import {
-  FiArrowUpRight,
-  FiMapPin,
-  FiPhone,
-} from "react-icons/fi";
+import { FiArrowUpRight } from "react-icons/fi";
 
 const PROPERTY = {
   name: "Thakben Apartments",
   location: "Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka",
-  area: "250–600 sq ft",
-  facilities: ["Swimming Pool", "Gym", "Parking"],
+  area: "250 to 600 sq ft",
+  facilities: ["The Checkpoint"],
   phone: "+880 1678-090900",
 };
 
 const PHONE_LINK = `tel:${PROPERTY.phone.replace(/\s/g, "")}`;
+
+const HERO_VIDEO_URL =
+  "https://res.cloudinary.com/qds5td8c/video/upload/f_auto,q_auto/v1/thakben/maati-properties-real-estate-tour?_a=BAMAROWO0";
 
 export default function Hero() {
   return (
@@ -23,46 +20,36 @@ export default function Hero() {
       aria-labelledby="hero-heading"
       className="relative min-h-screen overflow-hidden bg-[#11110f] text-[#f1f0eb]"
     >
-      {/* Background */}
-      <div className="absolute inset-0">
-        <Image
-          src="/hero-apartment.webp"
-          alt="Thakben Apartments in Dhaka, Bangladesh"
-          fill
-          priority
-          sizes="100vw"
-          quality={85}
-          className="object-cover"
-        />
+      {/* Background Video */}
+      <div className="absolute inset-0 overflow-hidden">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          tabIndex={-1}
+          disablePictureInPicture
+          disableRemotePlayback
+        >
+          <source src={HERO_VIDEO_URL} type="video/mp4" />
+        </video>
       </div>
 
       {/* Overlays */}
-      <div className="absolute inset-0 bg-black/45" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+      <div className="absolute inset-0 bg-black/40" />
+
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/10" />
+
+      <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
       {/* Content */}
       <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-end px-6 pb-8 pt-32 sm:px-8 lg:px-10 lg:pb-10">
         <div className="w-full">
-          {/* Location */}
-          <div className="mb-6 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/25 backdrop-blur-md">
-              <FiMapPin size={14} />
-            </span>
-
-            <div>
-              <p className="text-[9px] uppercase tracking-[0.25em] text-white/40">
-                Location
-              </p>
-              <p className="mt-0.5 text-sm font-medium text-white/80">
-                {PROPERTY.location}
-              </p>
-            </div>
-          </div>
-
           {/* Heading */}
           <div className="max-w-4xl">
-
             <h1
               id="hero-heading"
               className="text-5xl font-medium leading-[0.95] tracking-[-0.045em] sm:text-6xl md:text-7xl lg:text-[86px]"
@@ -89,10 +76,6 @@ export default function Hero() {
               <p className="mt-2 text-2xl font-medium tracking-tight text-white sm:text-3xl">
                 {PROPERTY.area}
               </p>
-
-              <p className="mt-1 text-xs text-white/40">
-                available spaces
-              </p>
             </div>
 
             {/* Facilities */}
@@ -101,15 +84,13 @@ export default function Hero() {
                 Facilities
               </p>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                {PROPERTY.facilities.map((facility) => (
-                  <span
-                    key={facility}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/75"
-                  >
-                    {facility}
-                  </span>
-                ))}
+              <div className="mt-3">
+                <a
+                  href="/#facilities"
+                  className="inline-block rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xl text-white/75 transition hover:bg-white/10 hover:text-white"
+                >
+                  {PROPERTY.facilities[0]}
+                </a>
               </div>
             </div>
 
@@ -119,9 +100,12 @@ export default function Hero() {
                 Contact & Location
               </p>
 
-              <p className="mt-2 text-xl font-medium tracking-tight text-white sm:text-2xl">
+              <a
+                href={PHONE_LINK}
+                className="mt-2 block text-xl font-medium tracking-tight text-white transition hover:text-white/80 sm:text-2xl"
+              >
                 {PROPERTY.phone}
-              </p>
+              </a>
 
               <p className="mt-2 text-sm text-white/50">
                 {PROPERTY.location}
@@ -129,11 +113,8 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Bottom Row */}
+          {/* Bottom CTA */}
           <div className="mt-6 flex flex-col gap-5 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            {/* Phone */}
-
-            {/* CTA */}
             <Link
               href="/#apartments"
               className="group flex w-fit items-center gap-3 rounded-full border border-white/20 bg-black/35 px-5 py-3 text-sm font-medium text-white/85 backdrop-blur-xl transition hover:bg-black/50 hover:text-white"

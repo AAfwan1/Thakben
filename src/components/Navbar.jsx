@@ -35,38 +35,18 @@ function Navbar() {
             backdrop-blur-2xl backdrop-saturate-150
           "
         >
-          {/* Logo */}
-          <Link
-            href="/"
-            onClick={closeMenu}
-            className="group flex items-center gap-3 pl-2"
-          >
-            <div
-              className="
-                flex h-10 w-10 items-center justify-center
-                overflow-hidden rounded-full
-                border border-white/15 bg-white/10
-                backdrop-blur-md transition
-                group-hover:bg-white/15
-              "
-            >
-              <img
-                src="/logo.png"
-                alt="Thakben"
-                className="h-full w-full object-contain"
-              />
-            </div>
-
-            <div className="leading-none">
-              <div className="text-[17px] font-semibold tracking-tight text-white">
-                Thakben
-              </div>
-              <div className="mt-1 text-[8px] font-medium uppercase tracking-[0.25em] text-white/40">
-                Apartments
-              </div>
-            </div>
-          </Link>
-
+{/* Logo */}
+<Link
+  href="/"
+  onClick={closeMenu}
+  className="group flex items-center pl-2"
+>
+  <img
+    src="/logo.png"
+    alt="Thakben"
+    className="h-10 w-20 object-contain transition-opacity group-hover:opacity-85"
+  />
+</Link>
           {/* Desktop Navigation */}
           <div className="hidden items-center md:flex">
             {NAV_LINKS.map(({ label, href }) => (

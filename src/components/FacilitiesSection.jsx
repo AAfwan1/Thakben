@@ -10,20 +10,52 @@ import {
   FiArrowUpRight,
 } from "react-icons/fi";
 
-import { FACILITY_IMAGES } from "@/data/facilityImages";
+import { gallerySections } from "@/data/facilityImages";
+
+const GALLERY = gallerySections?.[0]?.routes || [];
 
 const FACILITIES = [
   {
     name: "Swimming Pool",
-    folder: "Swimming-pool",
+    folder: "swimming-pool",
     description:
-      "A clean and relaxing swimming pool designed for residents to enjoy.",
+      "A clean and relaxing swimming pool designed for guests to enjoy.",
   },
   {
-    name: "Gym",
-    folder: "gym",
+    name: "Gym & Steam Bath",
+    folder: "gym&steamBath",
     description:
-      "A modern fitness space equipped for your everyday workout.",
+      "A modern fitness space with facilities for your everyday workout and relaxation.",
+  },
+  {
+    name: "Movie Theater",
+    folder: "Movie-Theater",
+    description:
+      "Enjoy movies and entertainment in a comfortable private theater.",
+  },
+  {
+    name: "Playground",
+    folder: "playground",
+    description:
+      "A dedicated recreational space for fun and entertainment.",
+  },
+  {
+    name: "Restaurant Area",
+    folder: "restaurant-area",
+    description:
+      "A comfortable dining space where you can relax and enjoy your food.",
+  },
+  {
+    name: "Billiards & Table Tennis",
+    folder: "Billards-and-table-tennis",
+    description:
+      "Enjoy billiards and table tennis in a dedicated indoor recreation area.",
+  },
+  {
+    name: "Gaming Lounge",
+    folder: "Gaming-lounge",
+    description:
+      "A premium gaming space with a wide range of entertainment options.",
   },
   {
     name: "Prayer Room",
@@ -31,30 +63,24 @@ const FACILITIES = [
     description:
       "A peaceful and dedicated space for prayer and reflection.",
   },
-  {
-    name: "Theater",
-    folder: "Theater",
-    description:
-      "Enjoy movies and entertainment in a comfortable private theater.",
-  },
-  {
-    name: "Others",
-    folder: "Others",
-    description:
-      "Additional facilities and shared spaces available for residents.",
-  },
-].map((facility) => ({
-  ...facility,
-  images:
-    FACILITY_IMAGES[facility.folder]?.map((image) => image.optimizedUrl) || [],
-}));
+].map((facility) => {
+  const route = GALLERY.find(
+    (item) => item.folder === facility.folder
+  );
+
+  return {
+    ...facility,
+    images:
+      route?.images?.map((image) => {
+        const match = image.match(/\((https?:\/\/[^)]+)\)/);
+        return match ? match[1] : image;
+      }) || [],
+  };
+});
 
 export default function FacilitiesSection() {
   const [gallery, setGallery] = useState(null);
   const [imageIndex, setImageIndex] = useState(0);
-
-  const swimmingPool = FACILITIES[0];
-  const otherFacilities = FACILITIES.slice(1);
 
   const openGallery = (facility, index = 0) => {
     if (!facility.images.length) return;
@@ -100,45 +126,36 @@ export default function FacilitiesSection() {
       >
         <div className="mx-auto max-w-7xl">
           {/* HEADER */}
-          <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="mb-2 text-xl font-medium uppercase tracking-[0.25em] text-blue-400">
-                Facilities
-              </p>
+          <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+<div>
+  <p className="mb-3 ml-3 text-xl font-medium uppercase tracking-[0.25em] text-blue-400">
+      Facilities
+  </p>
 
-              {/* <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-                Everything you need,
-                <br />
-                <span className="text-white/45">right at home.</span>
-              </h2> */}
-            </div>
+  <Image
+    src="/checkpoint.webp"
+    alt="The Checkpoint"
+    width={400}
+    height={120}
+    className="h-auto w-[300px] object-contain mix-blend-screen"
+  />
+</div>
 
             <p className="max-w-md text-sm leading-6 text-white/45">
-              Visit the Checkpoint on 11th floor to experience our various paid amenities
+              Visit the Checkpoint on 11th floor to experience our various
+              paid amenities
             </p>
           </div>
 
           {/* FACILITIES GRID */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            {/* FEATURED */}
-            {swimmingPool.images[0] && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {FACILITIES.map((facility) => (
               <FacilityCard
-                facility={swimmingPool}
-                featured
-                onClick={() => openGallery(swimmingPool)}
+                key={facility.folder}
+                facility={facility}
+                onClick={() => openGallery(facility)}
               />
-            )}
-
-            {/* OTHER FACILITIES */}
-            <div className="grid grid-cols-2 gap-4">
-              {otherFacilities.map((facility) => (
-                <FacilityCard
-                  key={facility.folder}
-                  facility={facility}
-                  onClick={() => openGallery(facility)}
-                />
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -238,7 +255,7 @@ export default function FacilitiesSection() {
 }
 
 /* FACILITY CARD */
-function FacilityCard({ facility, featured = false, onClick }) {
+function FacilityCard({ facility, onClick }) {
   const image = facility.images[0];
 
   if (!image) return null;
@@ -247,54 +264,28 @@ function FacilityCard({ facility, featured = false, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`group relative w-full overflow-hidden rounded-3xl border border-white/10 bg-[#18191b] text-left ${
-        featured ? "min-h-[420px] lg:h-full" : "aspect-[4/3]"
-      }`}
+      className="group relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-white/10 bg-[#18191b] text-left"
     >
       <Image
         src={image}
         alt={facility.name}
         fill
-        sizes={
-          featured
-            ? "(max-width: 1024px) 100vw, 50vw"
-            : "(max-width: 1024px) 50vw, 25vw"
-        }
-        loading={featured ? "eager" : "lazy"}
-        priority={featured}
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+        loading="lazy"
         decoding="async"
         className="object-cover"
       />
 
-      {/* STATIC OVERLAY — NO EXPENSIVE HOVER MOTION */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
-      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+      <div className="absolute inset-x-0 bottom-0 p-5">
         <div className="flex items-end justify-between gap-3">
           <div>
-            {featured && (
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.2em] text-blue-300">
-                Featured Facility
-              </p>
-            )}
-
-            <h3
-              className={
-                featured
-                  ? "text-2xl font-semibold text-white sm:text-3xl"
-                  : "text-base font-semibold text-white sm:text-lg"
-              }
-            >
+            <h3 className="text-base font-semibold text-white sm:text-lg">
               {facility.name}
             </h3>
 
-            <p
-              className={
-                featured
-                  ? "mt-2 max-w-lg text-sm leading-6 text-white/65"
-                  : "mt-1 line-clamp-2 text-xs leading-5 text-white/55"
-              }
-            >
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/55">
               {facility.description}
             </p>
           </div>
@@ -324,8 +315,11 @@ function GalleryButton({ direction, onClick }) {
         left ? "left-4 sm:left-6" : "right-4 sm:right-6"
       } top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white`}
     >
-      {left ? <FiChevronLeft size={23} /> : <FiChevronRight size={23} />}
+      {left ? (
+        <FiChevronLeft size={23} />
+      ) : (
+        <FiChevronRight size={23} />
+      )}
     </button>
   );
 }
-
