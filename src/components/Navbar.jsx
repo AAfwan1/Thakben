@@ -125,7 +125,7 @@ function Navbar() {
               ))}
 
               <Link
-                href="/apartments"
+                href="/#apartments"
                 onClick={closeMenu}
                 className="
                   mt-2 flex items-center justify-center gap-2
