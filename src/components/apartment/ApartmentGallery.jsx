@@ -123,33 +123,33 @@ export default function ApartmentGallery({ apartment }) {
         </button>
 
         {/* =================================================
-            SIDE PREVIEW
+            RIGHT SIDE
         ================================================== */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+        <div className="flex flex-col gap-3">
 
-          {images.slice(0, 2).map((image, index) => (
+          {/* Image 1 */}
+          {images[0] && (
             <button
-              key={`${image}-${index}`}
               type="button"
               onClick={() => {
-                setActiveIndex(index);
+                setActiveIndex(0);
                 setLightboxOpen(true);
               }}
               className="
                 group
                 relative
-                min-h-[150px]
+                aspect-[16/9]
                 overflow-hidden
                 rounded-[24px]
                 bg-[#e8e5dd]
-                lg:min-h-0
+                text-left
               "
             >
               <Image
-                src={image}
-                alt={`${apartment.name} preview ${index + 1}`}
+                src={images[0]}
+                alt={`${apartment.name} preview 1`}
                 fill
-                sizes="(max-width: 1024px) 50vw, 30vw"
+                sizes="(max-width: 1024px) 100vw, 30vw"
                 className="
                   object-cover
                   transition-transform
@@ -160,44 +160,105 @@ export default function ApartmentGallery({ apartment }) {
 
               <div className="absolute inset-0 bg-black/10 transition group-hover:bg-black/20" />
             </button>
-          ))}
+          )}
 
-          {/* View all */}
+          {/* Image 2 */}
+          {images[1] && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveIndex(1);
+                setLightboxOpen(true);
+              }}
+              className="
+                group
+                relative
+                aspect-[16/9]
+                overflow-hidden
+                rounded-[24px]
+                bg-[#e8e5dd]
+                text-left
+              "
+            >
+              <Image
+                src={images[1]}
+                alt={`${apartment.name} preview 2`}
+                fill
+                sizes="(max-width: 1024px) 100vw, 30vw"
+                className="
+                  object-cover
+                  transition-transform
+                  duration-700
+                  group-hover:scale-[1.04]
+                "
+              />
+
+              <div className="absolute inset-0 bg-black/10 transition group-hover:bg-black/20" />
+            </button>
+          )}
+
+          {/* Compact View All */}
           <button
             type="button"
             onClick={() => setLightboxOpen(true)}
             className="
               group
-              relative
               flex
-              min-h-[150px]
+              w-full
               items-center
-              justify-center
-              overflow-hidden
-              rounded-[24px]
+              justify-between
+              rounded-2xl
               border
-              border-black/10
-              bg-[#e8e5dd]
-              lg:min-h-0
+              border-black/[0.08]
+              bg-white
+              px-4
+              py-3
+              text-left
+              transition
+              hover:border-black/20
+              hover:bg-[#fafafa]
             "
           >
-            <div className="text-center">
+            <div className="flex items-center gap-2.5">
+              <span
+                className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-[#11110f]
+                  text-white
+                "
+              >
+                <FiMaximize2 size={13} />
+              </span>
 
-              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#11110f] text-[#f5f4f0] transition-transform duration-300 group-hover:scale-105">
-                <FiMaximize2 size={16} />
+              <div>
+                <p className="text-xs font-medium text-[#11110f]">
+                  View all photos
+                </p>
+
+                <p className="mt-0.5 text-[10px] text-black/40">
+                  {totalImages} photos
+                </p>
               </div>
-
-              <p className="mt-3 text-xs font-medium text-[#11110f]">
-                View all photos
-              </p>
-
-              <p className="mt-1 text-[10px] text-black/40">
-                {totalImages} photos
-              </p>
-
             </div>
-          </button>
 
+            <span
+              className="
+                text-sm
+                text-black/40
+                transition-transform
+                duration-300
+                group-hover:translate-x-1
+              "
+            >
+              →
+            </span>
+          </button>
         </div>
       </div>
 
@@ -271,7 +332,6 @@ export default function ApartmentGallery({ apartment }) {
           "
           onClick={() => setLightboxOpen(false)}
         >
-
           {/* Close */}
           <button
             type="button"
@@ -445,4 +505,4 @@ export default function ApartmentGallery({ apartment }) {
       )}
     </>
   );
-} 
+}

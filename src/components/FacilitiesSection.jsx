@@ -128,12 +128,12 @@ export default function FacilitiesSection() {
           {/* HEADER */}
           <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
 <div>
-  <p className="mb-3 ml-3 text-xl font-medium uppercase tracking-[0.25em] text-blue-400">
+  <p className="mb-3  text-xl font-medium uppercase tracking-[0.25em] text-blue-400">
       Facilities
   </p>
 
   <Image
-    src="/checkpoint.webp"
+    src="/checkpointR.webp"
     alt="The Checkpoint"
     width={400}
     height={120}

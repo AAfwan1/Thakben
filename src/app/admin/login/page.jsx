@@ -1,13 +1,16 @@
-
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { FiLock, FiMail, FiArrowRight, FiLoader, FiEye, FiEyeOff } from "react-icons/fi";
+import {
+  FiLock,
+  FiMail,
+  FiArrowRight,
+  FiLoader,
+  FiEye,
+  FiEyeOff,
+} from "react-icons/fi";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
-
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -52,28 +55,25 @@ export default function AdminLoginPage() {
 
       const text = await response.text();
 
-console.log("LOGIN STATUS:", response.status);
-console.log("LOGIN RESPONSE:", text);
+      let data;
 
-let data;
-
-try {
-  data = JSON.parse(text);
-} catch {
-  throw new Error(
-    `Login API returned HTML or an invalid response (${response.status})`
-  );
-}
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          `Login API returned an invalid response (${response.status}).`
+        );
+      }
 
       if (!response.ok) {
         throw new Error(data.message || "Login failed.");
       }
 
-      router.replace("/admin");
-      router.refresh();
+      // Full navigation ensures the newly-set auth cookie
+      // is available when the admin page loads.
+      window.location.replace("/admin");
     } catch (error) {
       setError(error.message || "Something went wrong.");
-    } finally {
       setLoading(false);
     }
   }
@@ -154,7 +154,9 @@ try {
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   disabled={loading}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                   className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-2 text-white/35 transition hover:bg-white/5 hover:text-white/70 disabled:opacity-50"
                 >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
