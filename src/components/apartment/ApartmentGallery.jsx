@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -125,42 +126,7 @@ export default function ApartmentGallery({ apartment }) {
         {/* =================================================
             RIGHT SIDE
         ================================================== */}
-        <div className="flex flex-col gap-3">
-
-          {/* Image 1 */}
-          {images[0] && (
-            <button
-              type="button"
-              onClick={() => {
-                setActiveIndex(0);
-                setLightboxOpen(true);
-              }}
-              className="
-                group
-                relative
-                aspect-[16/9]
-                overflow-hidden
-                rounded-[24px]
-                bg-[#e8e5dd]
-                text-left
-              "
-            >
-              <Image
-                src={images[0]}
-                alt={`${apartment.name} preview 1`}
-                fill
-                sizes="(max-width: 1024px) 100vw, 30vw"
-                className="
-                  object-cover
-                  transition-transform
-                  duration-700
-                  group-hover:scale-[1.04]
-                "
-              />
-
-              <div className="absolute inset-0 bg-black/10 transition group-hover:bg-black/20" />
-            </button>
-          )}
+        <div className="grid grid-cols-2 gap-3 lg:flex lg:flex-col">
 
           {/* Image 2 */}
           {images[1] && (
@@ -178,13 +144,50 @@ export default function ApartmentGallery({ apartment }) {
                 rounded-[24px]
                 bg-[#e8e5dd]
                 text-left
+                lg:aspect-[16/9]
               "
             >
               <Image
                 src={images[1]}
                 alt={`${apartment.name} preview 2`}
                 fill
-                sizes="(max-width: 1024px) 100vw, 30vw"
+                sizes="(max-width: 1024px) 50vw, 30vw"
+                className="
+                  object-cover
+                  transition-transform
+                  duration-700
+                  group-hover:scale-[1.04]
+                "
+              />
+
+              <div className="absolute inset-0 bg-black/10 transition group-hover:bg-black/20" />
+            </button>
+          )}
+
+          {/* Image 3 */}
+          {images[2] && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveIndex(2);
+                setLightboxOpen(true);
+              }}
+              className="
+                group
+                relative
+                aspect-[16/9]
+                overflow-hidden
+                rounded-[24px]
+                bg-[#e8e5dd]
+                text-left
+                lg:aspect-[16/9]
+              "
+            >
+              <Image
+                src={images[2]}
+                alt={`${apartment.name} preview 3`}
+                fill
+                sizes="(max-width: 1024px) 50vw, 30vw"
                 className="
                   object-cover
                   transition-transform
@@ -203,6 +206,7 @@ export default function ApartmentGallery({ apartment }) {
             onClick={() => setLightboxOpen(true)}
             className="
               group
+              col-span-2
               flex
               w-full
               items-center
@@ -217,6 +221,7 @@ export default function ApartmentGallery({ apartment }) {
               transition
               hover:border-black/20
               hover:bg-[#fafafa]
+              lg:col-span-1
             "
           >
             <div className="flex items-center gap-2.5">

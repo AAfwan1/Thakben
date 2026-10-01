@@ -1,5 +1,22 @@
 import mongoose from "mongoose";
 
+const identityImageSchema = new mongoose.Schema(
+  {
+    publicId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const bookingSchema = new mongoose.Schema(
   {
     apartmentId: {
@@ -58,6 +75,30 @@ const bookingSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       maxlength: 254,
+    },
+
+    // =====================================================
+    // IDENTITY DOCUMENTS
+    // =====================================================
+    // NID front, NID back and selfie.
+    // No verification status is stored.
+    // =====================================================
+
+    identityDocuments: {
+      nidFront: {
+        type: identityImageSchema,
+        default: null,
+      },
+
+      nidBack: {
+        type: identityImageSchema,
+        default: null,
+      },
+
+      selfie: {
+        type: identityImageSchema,
+        default: null,
+      },
     },
 
     status: {
@@ -170,14 +211,14 @@ bookingSchema.index(
 // AUTO DELETE UNPAID PENDING BOOKINGS
 // =====================================================
 //
-// Pending + unpaid bookings will automatically expire
-// 10 minutes after they are created.
+// Pending + unpaid bookings automatically expire
+// 10 minutes after creation.
 //
-// 600 seconds = 10 minutes
+// 600 seconds = 10 minutes.
 //
-// Once the booking becomes confirmed/paid/cancelled,
-// it no longer matches this partial TTL index.
-//
+// Confirmed/paid/cancelled bookings do not match
+// this partial TTL index.
+// =====================================================
 
 bookingSchema.index(
   { createdAt: 1 },

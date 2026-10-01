@@ -1,13 +1,18 @@
-
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   FiArrowUpRight,
   FiCalendar,
   FiCheck,
   FiChevronLeft,
   FiChevronRight,
+  FiX,
 } from "react-icons/fi";
 
 function formatDate(date) {
@@ -32,7 +37,9 @@ function calculateDays(checkIn, checkOut) {
 
   const difference = end.getTime() - start.getTime();
 
-  return Math.ceil(difference / (1000 * 60 * 60 * 24));
+  return Math.ceil(
+    difference / (1000 * 60 * 60 * 24)
+  );
 }
 
 function calculatePrice(days, pricingTiers) {
@@ -49,7 +56,9 @@ function calculatePrice(days, pricingTiers) {
 
   if (!pricingTier) return 0;
 
-  return days * Number(pricingTier.pricePerDay);
+  return (
+    days * Number(pricingTier.pricePerDay)
+  );
 }
 
 function isDateBetween(date, start, end) {
@@ -66,23 +75,58 @@ export default function BookingForm({ apartment }) {
     request: "",
   });
 
-  const [submitted, setSubmitted] = useState(false);
+  const [identityImages, setIdentityImages] =
+    useState({
+      nidFront: null,
+      nidBack: null,
+      selfie: null,
+    });
+
+  const [previews, setPreviews] = useState({
+    nidFront: "",
+    nidBack: "",
+    selfie: "",
+  });
+
+  const previewsRef = useRef(previews);
+
+  const [submitted, setSubmitted] =
+    useState(false);
 
   const [bookings, setBookings] = useState([]);
 
-  const [loadingBookings, setLoadingBookings] = useState(true);
+  const [loadingBookings, setLoadingBookings] =
+    useState(true);
 
-  const [calendarDate, setCalendarDate] = useState(() => {
-    const today = new Date();
+  const [calendarDate, setCalendarDate] =
+    useState(() => {
+      const today = new Date();
 
-    return new Date(today.getFullYear(), today.getMonth(), 1);
-  });
+      return new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      );
+    });
 
-  const [dateError, setDateError] = useState("");
+  const [dateError, setDateError] =
+    useState("");
 
-  // =====================================================
-  // LOAD ADMIN-BLOCKED DATES
-  // =====================================================
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(previewsRef.current).forEach(
+        (url) => {
+          if (url) {
+            URL.revokeObjectURL(url);
+          }
+        }
+      );
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,12 +150,15 @@ export default function BookingForm({ apartment }) {
         try {
           data = JSON.parse(text);
         } catch {
-          throw new Error("Invalid availability response.");
+          throw new Error(
+            "Invalid availability response."
+          );
         }
 
         if (!response.ok) {
           throw new Error(
-            data?.error || "Unable to load apartment availability."
+            data?.error ||
+              "Unable to load apartment availability."
           );
         }
 
@@ -119,7 +166,10 @@ export default function BookingForm({ apartment }) {
           setBookings(data.bookings || []);
         }
       } catch (error) {
-        console.error("AVAILABILITY ERROR:", error);
+        console.error(
+          "AVAILABILITY ERROR:",
+          error
+        );
 
         if (!cancelled) {
           setBookings([]);
@@ -142,10 +192,6 @@ export default function BookingForm({ apartment }) {
     };
   }, [apartment?._id]);
 
-  // =====================================================
-  // TODAY
-  // =====================================================
-
   const today = useMemo(() => {
     const date = new Date();
 
@@ -154,27 +200,23 @@ export default function BookingForm({ apartment }) {
     return date;
   }, []);
 
-  // =====================================================
-  // DAYS
-  // =====================================================
-
   const days = useMemo(
-    () => calculateDays(form.checkIn, form.checkOut),
+    () =>
+      calculateDays(
+        form.checkIn,
+        form.checkOut
+      ),
     [form.checkIn, form.checkOut]
   );
 
-  // =====================================================
-  // TOTAL PRICE
-  // =====================================================
-
   const total = useMemo(
-    () => calculatePrice(days, apartment.pricingTiers),
+    () =>
+      calculatePrice(
+        days,
+        apartment.pricingTiers
+      ),
     [days, apartment.pricingTiers]
   );
-
-  // =====================================================
-  // UPDATE FORM
-  // =====================================================
 
   const updateField = (field, value) => {
     setForm((previous) => ({
@@ -183,14 +225,91 @@ export default function BookingForm({ apartment }) {
     }));
   };
 
-  // =====================================================
-  // CHECK ADMIN UNAVAILABLE DATE
-  // =====================================================
+  const handleImageChange = (
+    field,
+    event
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setDateError(
+        "Please upload a JPG, PNG, or WebP image."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setDateError(
+        "Each identity image must be 10 MB or smaller."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    const previewUrl =
+      URL.createObjectURL(file);
+
+    setPreviews((previous) => {
+      if (previous[field]) {
+        URL.revokeObjectURL(
+          previous[field]
+        );
+      }
+
+      return {
+        ...previous,
+        [field]: previewUrl,
+      };
+    });
+
+    setIdentityImages((previous) => ({
+      ...previous,
+      [field]: file,
+    }));
+
+    setDateError("");
+
+    event.target.value = "";
+  };
+
+  const removeImage = (field) => {
+    setPreviews((previous) => {
+      if (previous[field]) {
+        URL.revokeObjectURL(
+          previous[field]
+        );
+      }
+
+      return {
+        ...previous,
+        [field]: "",
+      };
+    });
+
+    setIdentityImages((previous) => ({
+      ...previous,
+      [field]: null,
+    }));
+  };
 
   const isUnavailable = (date) => {
     return bookings.some((booking) => {
-      const unavailableStart = parseDate(booking.checkIn);
-      const unavailableEnd = parseDate(booking.checkOut);
+      const unavailableStart =
+        parseDate(booking.checkIn);
+
+      const unavailableEnd =
+        parseDate(booking.checkOut);
 
       return isDateBetween(
         date,
@@ -200,11 +319,10 @@ export default function BookingForm({ apartment }) {
     });
   };
 
-  // =====================================================
-  // CHECK RANGE AGAINST ADMIN UNAVAILABLE DATES
-  // =====================================================
-
-  const rangeIsAvailable = (checkIn, checkOut) => {
+  const rangeIsAvailable = (
+    checkIn,
+    checkOut
+  ) => {
     if (!checkIn || !checkOut) {
       return true;
     }
@@ -213,8 +331,11 @@ export default function BookingForm({ apartment }) {
     const end = parseDate(checkOut);
 
     return !bookings.some((booking) => {
-      const unavailableStart = parseDate(booking.checkIn);
-      const unavailableEnd = parseDate(booking.checkOut);
+      const unavailableStart =
+        parseDate(booking.checkIn);
+
+      const unavailableEnd =
+        parseDate(booking.checkOut);
 
       return (
         start < unavailableEnd &&
@@ -223,16 +344,19 @@ export default function BookingForm({ apartment }) {
     });
   };
 
-  // =====================================================
-  // CALENDAR
-  // =====================================================
+  const calendarYear =
+    calendarDate.getFullYear();
 
-  const calendarYear = calendarDate.getFullYear();
-  const calendarMonth = calendarDate.getMonth();
+  const calendarMonth =
+    calendarDate.getMonth();
 
-  const monthName = calendarDate.toLocaleString("en-US", {
-    month: "long",
-  });
+  const monthName =
+    calendarDate.toLocaleString(
+      "en-US",
+      {
+        month: "long",
+      }
+    );
 
   const firstDay = new Date(
     calendarYear,
@@ -248,19 +372,27 @@ export default function BookingForm({ apartment }) {
 
   const calendarDays = [];
 
-  for (let i = 0; i < firstDay; i++) {
+  for (
+    let i = 0;
+    i < firstDay;
+    i++
+  ) {
     calendarDays.push(null);
   }
 
-  for (let day = 1; day <= daysInMonth; day++) {
+  for (
+    let day = 1;
+    day <= daysInMonth;
+    day++
+  ) {
     calendarDays.push(
-      new Date(calendarYear, calendarMonth, day)
+      new Date(
+        calendarYear,
+        calendarMonth,
+        day
+      )
     );
   }
-
-  // =====================================================
-  // SELECT DATE
-  // =====================================================
 
   const selectDate = (date) => {
     if (!date) return;
@@ -275,28 +407,62 @@ export default function BookingForm({ apartment }) {
 
     setDateError("");
 
-    if (!form.checkIn && !form.checkOut) {
-      updateField("checkIn", dateString);
-      updateField("checkOut", "");
+    if (
+      !form.checkIn &&
+      !form.checkOut
+    ) {
+      updateField(
+        "checkIn",
+        dateString
+      );
+
+      updateField(
+        "checkOut",
+        ""
+      );
 
       return;
     }
 
-    if (form.checkIn && !form.checkOut) {
-      if (dateString === form.checkIn) {
-        updateField("checkIn", "");
-        updateField("checkOut", "");
+    if (
+      form.checkIn &&
+      !form.checkOut
+    ) {
+      if (
+        dateString ===
+        form.checkIn
+      ) {
+        updateField(
+          "checkIn",
+          ""
+        );
+
+        updateField(
+          "checkOut",
+          ""
+        );
 
         return;
       }
 
-      if (dateString < form.checkIn) {
-        updateField("checkIn", dateString);
+      if (
+        dateString <
+        form.checkIn
+      ) {
+        updateField(
+          "checkIn",
+          dateString
+        );
 
         return;
       }
 
-      if (!rangeIsAvailable(form.checkIn, dateString)) {
+      if (
+        !rangeIsAvailable(
+          form.checkIn,
+          dateString
+        )
+      ) {
         setDateError(
           "Some dates in this stay are unavailable. Please choose another date."
         );
@@ -304,59 +470,62 @@ export default function BookingForm({ apartment }) {
         return;
       }
 
-      updateField("checkOut", dateString);
+      updateField(
+        "checkOut",
+        dateString
+      );
 
       return;
     }
 
-    if (form.checkIn && form.checkOut) {
-      if (dateString === form.checkIn) {
-        updateField("checkIn", "");
-        updateField("checkOut", "");
+    if (
+      form.checkIn &&
+      form.checkOut
+    ) {
+      if (
+        dateString ===
+        form.checkIn
+      ) {
+        updateField(
+          "checkIn",
+          ""
+        );
 
-        return;
-      }
-
-      if (dateString === form.checkOut) {
-        updateField("checkIn", "");
-        updateField("checkOut", "");
-
-        return;
-      }
-
-      if (dateString < form.checkIn) {
-        if (!rangeIsAvailable(dateString, form.checkOut)) {
-          setDateError(
-            "Some dates in this stay are unavailable. Please choose another date."
-          );
-
-          return;
-        }
-
-        updateField("checkIn", dateString);
-
-        return;
-      }
-
-      if (dateString > form.checkOut) {
-        if (!rangeIsAvailable(form.checkIn, dateString)) {
-          setDateError(
-            "Some dates in this stay are unavailable. Please choose another date."
-          );
-
-          return;
-        }
-
-        updateField("checkOut", dateString);
+        updateField(
+          "checkOut",
+          ""
+        );
 
         return;
       }
 
       if (
-        dateString > form.checkIn &&
-        dateString < form.checkOut
+        dateString ===
+        form.checkOut
       ) {
-        if (!rangeIsAvailable(form.checkIn, dateString)) {
+        updateField(
+          "checkIn",
+          ""
+        );
+
+        updateField(
+          "checkOut",
+          ""
+        );
+
+        return;
+      }
+
+      if (
+        dateString <
+        form.checkIn
+      ) {
+        if (
+          !rangeIsAvailable(
+            dateString,
+            form.checkOut
+          )
+        ) {
           setDateError(
             "Some dates in this stay are unavailable. Please choose another date."
           );
@@ -364,16 +533,65 @@ export default function BookingForm({ apartment }) {
           return;
         }
 
-        updateField("checkOut", dateString);
+        updateField(
+          "checkIn",
+          dateString
+        );
 
         return;
       }
+
+      if (
+        dateString >
+        form.checkOut
+      ) {
+        if (
+          !rangeIsAvailable(
+            form.checkIn,
+            dateString
+          )
+        ) {
+          setDateError(
+            "Some dates in this stay are unavailable. Please choose another date."
+          );
+
+          return;
+        }
+
+        updateField(
+          "checkOut",
+          dateString
+        );
+
+        return;
+      }
+
+      if (
+        dateString >
+          form.checkIn &&
+        dateString <
+          form.checkOut
+      ) {
+        if (
+          !rangeIsAvailable(
+            form.checkIn,
+            dateString
+          )
+        ) {
+          setDateError(
+            "Some dates in this stay are unavailable. Please choose another date."
+          );
+
+          return;
+        }
+
+        updateField(
+          "checkOut",
+          dateString
+        );
+      }
     }
   };
-
-  // =====================================================
-  // MONTH NAVIGATION
-  // =====================================================
 
   const previousMonth = () => {
     const previous = new Date(
@@ -405,15 +623,22 @@ export default function BookingForm({ apartment }) {
     );
   };
 
-  // =====================================================
-  // API RESPONSE
-  // =====================================================
+  const parseApiResponse = async (
+    response,
+    apiName
+  ) => {
+    const text =
+      await response.text();
 
-  const parseApiResponse = async (response, apiName) => {
-    const text = await response.text();
+    console.log(
+      `${apiName} status:`,
+      response.status
+    );
 
-    console.log(`${apiName} status:`, response.status);
-    console.log(`${apiName} response:`, text);
+    console.log(
+      `${apiName} response:`,
+      text
+    );
 
     try {
       return JSON.parse(text);
@@ -424,16 +649,17 @@ export default function BookingForm({ apartment }) {
     }
   };
 
-  // =====================================================
-  // SUBMIT
-  // =====================================================
-
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event
+  ) => {
     event.preventDefault();
 
     setDateError("");
 
-    if (!form.checkIn || !form.checkOut) {
+    if (
+      !form.checkIn ||
+      !form.checkOut
+    ) {
       setDateError(
         "Please select your check-in and check-out dates."
       );
@@ -449,7 +675,12 @@ export default function BookingForm({ apartment }) {
       return;
     }
 
-    if (!rangeIsAvailable(form.checkIn, form.checkOut)) {
+    if (
+      !rangeIsAvailable(
+        form.checkIn,
+        form.checkOut
+      )
+    ) {
       setDateError(
         "These dates are unavailable. Please choose another stay."
       );
@@ -465,31 +696,95 @@ export default function BookingForm({ apartment }) {
       return;
     }
 
+    if (!identityImages.nidFront) {
+      setDateError(
+        "Please upload the front side of your NID."
+      );
+
+      return;
+    }
+
+    if (!identityImages.nidBack) {
+      setDateError(
+        "Please upload the back side of your NID."
+      );
+
+      return;
+    }
+
+    if (!identityImages.selfie) {
+      setDateError(
+        "Please upload your selfie."
+      );
+
+      return;
+    }
+
     setSubmitted(true);
 
     try {
-      const bookingResponse = await fetch(
-        "/api/bookings",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            apartmentId: apartment._id,
-            checkIn: form.checkIn,
-            checkOut: form.checkOut,
-            guestName: form.name,
-            guestPhone: form.phone,
-            email: form.email,
-          }),
-        }
+      const bookingFormData =
+        new FormData();
+
+      bookingFormData.append(
+        "apartmentId",
+        apartment._id
       );
 
-      const bookingData = await parseApiResponse(
-        bookingResponse,
-        "Booking API"
+      bookingFormData.append(
+        "checkIn",
+        form.checkIn
       );
+
+      bookingFormData.append(
+        "checkOut",
+        form.checkOut
+      );
+
+      bookingFormData.append(
+        "guestName",
+        form.name
+      );
+
+      bookingFormData.append(
+        "guestPhone",
+        form.phone
+      );
+
+      bookingFormData.append(
+        "email",
+        form.email
+      );
+
+      bookingFormData.append(
+        "nidFront",
+        identityImages.nidFront
+      );
+
+      bookingFormData.append(
+        "nidBack",
+        identityImages.nidBack
+      );
+
+      bookingFormData.append(
+        "selfie",
+        identityImages.selfie
+      );
+
+      const bookingResponse =
+        await fetch(
+          "/api/bookings",
+          {
+            method: "POST",
+            body: bookingFormData,
+          }
+        );
+
+      const bookingData =
+        await parseApiResponse(
+          bookingResponse,
+          "Booking API"
+        );
 
       if (
         !bookingResponse.ok ||
@@ -503,25 +798,29 @@ export default function BookingForm({ apartment }) {
         );
       }
 
-      const bookingId = bookingData.booking.id;
+      const bookingId =
+        bookingData.booking.id;
 
-      const paymentResponse = await fetch(
-        "/api/payments/sslcommerz",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bookingId,
-          }),
-        }
-      );
+      const paymentResponse =
+        await fetch(
+          "/api/payments/sslcommerz",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              bookingId,
+            }),
+          }
+        );
 
-      const paymentData = await parseApiResponse(
-        paymentResponse,
-        "Payment API"
-      );
+      const paymentData =
+        await parseApiResponse(
+          paymentResponse,
+          "Payment API"
+        );
 
       if (
         !paymentResponse.ok ||
@@ -535,7 +834,8 @@ export default function BookingForm({ apartment }) {
         );
       }
 
-      window.location.href = paymentData.paymentUrl;
+      window.location.href =
+        paymentData.paymentUrl;
     } catch (error) {
       console.error(
         "Booking/payment error:",
@@ -551,9 +851,88 @@ export default function BookingForm({ apartment }) {
     }
   };
 
-  // =====================================================
-  // UI
-  // =====================================================
+  const ImageUploadBox = ({
+    field,
+    label,
+    description,
+  }) => {
+    const preview = previews[field];
+
+    return (
+      <div className="min-w-0 rounded-2xl border border-black/[0.08] bg-[#fafafa] p-4">
+        <div className="flex flex-col">
+          <div className="relative h-20 w-full overflow-hidden rounded-xl border border-black/[0.08] bg-white">
+            {preview ? (
+              <>
+                <img
+                  src={preview}
+                  alt={`${label} preview`}
+                  className="h-full w-full object-contain"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    removeImage(field)
+                  }
+                  aria-label={`Remove ${label}`}
+                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/75 text-white transition hover:bg-black"
+                >
+                  <FiX size={12} />
+                </button>
+              </>
+            ) : (
+              <label
+                htmlFor={`identity-${field}`}
+                className="flex h-full w-full cursor-pointer items-center justify-center"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/[0.04]">
+                  <FiCalendar
+                    size={17}
+                    className="text-black/25"
+                  />
+                </div>
+              </label>
+            )}
+          </div>
+
+          <div className="mt-3 min-w-0">
+            <p className="text-xs font-medium text-black">
+              {label}
+            </p>
+
+            <p className="mt-1 text-[9px] leading-4 text-black/35">
+              {preview
+                ? "Image selected"
+                : description}
+            </p>
+          </div>
+
+          <label
+            htmlFor={`identity-${field}`}
+            className="mt-3 inline-flex w-fit cursor-pointer rounded-full border border-black/[0.08] bg-white px-3 py-1.5 text-[9px] font-medium text-black transition hover:bg-black hover:text-white"
+          >
+            {preview
+              ? "Change image"
+              : "Choose image"}
+          </label>
+
+          <input
+            id={`identity-${field}`}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(event) =>
+              handleImageChange(
+                field,
+                event
+              )
+            }
+            className="hidden"
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -561,8 +940,6 @@ export default function BookingForm({ apartment }) {
       id="bookingfrom"
     >
       <div className="p-6 sm:p-7">
-
-        {/* HEADER */}
         <div className="flex items-center justify-between gap-4">
           <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-black/40">
             Reserve this apartment
@@ -578,18 +955,15 @@ export default function BookingForm({ apartment }) {
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-black/45">
-          Select your dates and provide your information
-          to continue.
+          Select your dates and provide your
+          information to continue.
         </p>
 
         <form
           onSubmit={handleSubmit}
           className="mt-7"
         >
-
-          {/* CALENDAR */}
           <div className="rounded-[24px] border border-black/[0.08] bg-[#fafafa] p-4 sm:p-5">
-
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-black/40">
@@ -597,7 +971,8 @@ export default function BookingForm({ apartment }) {
                 </p>
 
                 <p className="mt-1 text-xs text-black/35">
-                  {form.checkIn && !form.checkOut
+                  {form.checkIn &&
+                  !form.checkOut
                     ? "Now select your check-out date"
                     : "Choose an available stay"}
                 </p>
@@ -606,27 +981,36 @@ export default function BookingForm({ apartment }) {
               <div className="flex gap-1.5">
                 <button
                   type="button"
-                  onClick={previousMonth}
+                  onClick={
+                    previousMonth
+                  }
                   aria-label="Previous month"
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.08] bg-white text-black/45 transition hover:bg-black hover:text-white"
                 >
-                  <FiChevronLeft size={14} />
+                  <FiChevronLeft
+                    size={14}
+                  />
                 </button>
 
                 <button
                   type="button"
-                  onClick={nextMonth}
+                  onClick={
+                    nextMonth
+                  }
                   aria-label="Next month"
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.08] bg-white text-black/45 transition hover:bg-black hover:text-white"
                 >
-                  <FiChevronRight size={14} />
+                  <FiChevronRight
+                    size={14}
+                  />
                 </button>
               </div>
             </div>
 
             <div className="mt-5 flex items-center justify-center">
               <p className="text-sm font-medium text-black">
-                {monthName} {calendarYear}
+                {monthName}{" "}
+                {calendarYear}
               </p>
             </div>
 
@@ -639,92 +1023,112 @@ export default function BookingForm({ apartment }) {
                 "T",
                 "F",
                 "S",
-              ].map((day, index) => (
-                <div
-                  key={`${day}-${index}`}
-                  className="pb-2 text-center text-[9px] font-medium uppercase text-black/30"
-                >
-                  {day}
-                </div>
-              ))}
+              ].map(
+                (day, index) => (
+                  <div
+                    key={`${day}-${index}`}
+                    className="pb-2 text-center text-[9px] font-medium uppercase text-black/30"
+                  >
+                    {day}
+                  </div>
+                )
+              )}
             </div>
 
             <div className="grid grid-cols-7 gap-y-1">
-              {calendarDays.map((date, index) => {
-                if (!date) {
+              {calendarDays.map(
+                (date, index) => {
+                  if (!date) {
+                    return (
+                      <div
+                        key={`empty-${index}`}
+                        className="h-9"
+                      />
+                    );
+                  }
+
+                  const dateString =
+                    formatDate(date);
+
+                  const unavailable =
+                    isUnavailable(
+                      date
+                    );
+
+                  const past =
+                    date < today;
+
+                  const isCheckIn =
+                    form.checkIn ===
+                    dateString;
+
+                  const isCheckOut =
+                    form.checkOut ===
+                    dateString;
+
+                  const hasSelectedRange =
+                    form.checkIn &&
+                    form.checkOut;
+
+                  const rangeStart =
+                    hasSelectedRange
+                      ? parseDate(
+                          form.checkIn
+                        )
+                      : null;
+
+                  const rangeEnd =
+                    hasSelectedRange
+                      ? parseDate(
+                          form.checkOut
+                        )
+                      : null;
+
+                  const isInSelectedRange =
+                    hasSelectedRange &&
+                    date >=
+                      rangeStart &&
+                    date <= rangeEnd;
+
+                  const selected =
+                    isCheckIn ||
+                    isCheckOut ||
+                    isInSelectedRange;
+
+                  const disabled =
+                    unavailable || past;
+
                   return (
                     <div
-                      key={`empty-${index}`}
-                      className="h-9"
-                    />
+                      key={dateString}
+                      className="flex h-9 items-center justify-center"
+                    >
+                      <button
+                        type="button"
+                        disabled={
+                          disabled
+                        }
+                        onClick={() =>
+                          selectDate(
+                            date
+                          )
+                        }
+                        className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-medium transition ${
+                          selected
+                            ? "bg-black text-white"
+                            : unavailable
+                            ? "cursor-not-allowed bg-red-50 text-red-500 line-through"
+                            : past
+                            ? "cursor-not-allowed text-black/15"
+                            : "text-black/65 hover:bg-black/[0.06] hover:text-black"
+                        }`}
+                      >
+                        {date.getDate()}
+                      </button>
+                    </div>
                   );
                 }
-
-                const dateString = formatDate(date);
-
-                const unavailable =
-                  isUnavailable(date);
-
-                const past = date < today;
-
-                const isCheckIn =
-                  form.checkIn === dateString;
-
-                const isCheckOut =
-                  form.checkOut === dateString;
-
-                const hasSelectedRange =
-                  form.checkIn && form.checkOut;
-
-                const rangeStart =
-                  hasSelectedRange
-                    ? parseDate(form.checkIn)
-                    : null;
-
-                const rangeEnd =
-                  hasSelectedRange
-                    ? parseDate(form.checkOut)
-                    : null;
-
-                const isInSelectedRange =
-                  hasSelectedRange &&
-                  date >= rangeStart &&
-                  date <= rangeEnd;
-
-                const selected =
-                  isCheckIn ||
-                  isCheckOut ||
-                  isInSelectedRange;
-
-                const disabled =
-                  unavailable || past;
-
-                return (
-                  <div
-                    key={dateString}
-                    className="flex h-9 items-center justify-center"
-                  >
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() =>
-                        selectDate(date)
-                      }
-                      className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-medium transition ${
-                        selected
-                          ? "bg-black text-white"
-                          : unavailable
-                          ? "cursor-not-allowed bg-red-50 text-red-500 line-through"
-                          : past
-                          ? "cursor-not-allowed text-black/15"
-                          : "text-black/65 hover:bg-black/[0.06] hover:text-black"
-                      }`}
-                    >
-                      {date.getDate()}
-                    </button>
-                  </div>
-                );
-              })}
+              )}
             </div>
 
             <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-black/[0.08] pt-4">
@@ -762,13 +1166,12 @@ export default function BookingForm({ apartment }) {
             {!loadingBookings &&
               bookings.length === 0 && (
                 <p className="mt-4 text-center text-[9px] text-black/30">
-                  No unavailable dates currently listed.
+                  No unavailable dates
+                  currently listed.
                 </p>
               )}
           </div>
 
-
-          {/* SELECTED DATES */}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-black/[0.08] bg-[#fafafa] px-4 py-3.5">
               <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
@@ -776,7 +1179,8 @@ export default function BookingForm({ apartment }) {
               </p>
 
               <p className="mt-1 text-sm text-black">
-                {form.checkIn || "Select a date"}
+                {form.checkIn ||
+                  "Select a date"}
               </p>
             </div>
 
@@ -786,13 +1190,12 @@ export default function BookingForm({ apartment }) {
               </p>
 
               <p className="mt-1 text-sm text-black">
-                {form.checkOut || "Select a date"}
+                {form.checkOut ||
+                  "Select a date"}
               </p>
             </div>
           </div>
 
-
-          {/* DATE ERROR */}
           {dateError && (
             <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
               <p className="text-center text-[10px] leading-5 text-red-600">
@@ -801,8 +1204,6 @@ export default function BookingForm({ apartment }) {
             </div>
           )}
 
-
-          {/* DURATION */}
           <div className="mt-3 rounded-2xl border border-black/[0.08] bg-white px-4 py-3">
             <div className="flex items-center justify-between">
               <span className="text-xs text-black/40">
@@ -812,15 +1213,15 @@ export default function BookingForm({ apartment }) {
               <span className="text-sm font-medium text-black">
                 {days > 0
                   ? `${days} ${
-                      days === 1 ? "day" : "days"
+                      days === 1
+                        ? "day"
+                        : "days"
                     }`
                   : "Select dates"}
               </span>
             </div>
           </div>
 
-
-          {/* GUEST INFORMATION */}
           <div className="mt-7">
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-black/40">
               Guest information
@@ -884,8 +1285,47 @@ export default function BookingForm({ apartment }) {
             </div>
           </div>
 
+          <div className="mt-7">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-black/40">
+                Identity documents
+              </p>
 
-          {/* TOTAL */}
+              <p className="mt-2 text-[10px] leading-5 text-black/30">
+                Upload your NID front,
+                NID back, and a clear
+                selfie.
+              </p>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <ImageUploadBox
+                field="nidFront"
+                label="NID Front"
+                description="Front side of your NID"
+              />
+
+              <ImageUploadBox
+                field="nidBack"
+                label="NID Back"
+                description="Back side of your NID"
+              />
+
+              <ImageUploadBox
+                field="selfie"
+                label="Selfie"
+                description="Clear face photo"
+              />
+            </div>
+
+            <p className="mt-3 text-[9px] leading-4 text-black/25">
+              JPG, PNG, or WebP.
+              Maximum 10 MB per image.
+              Images are securely
+              processed before storage.
+            </p>
+          </div>
+
           <div className="mt-7 rounded-[24px] border border-black/[0.08] bg-[#fafafa] p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs text-black/40">
@@ -895,19 +1335,20 @@ export default function BookingForm({ apartment }) {
               </span>
 
               <span className="text-xl font-medium text-black">
-                ৳{total.toLocaleString()}
+                ৳
+                {total.toLocaleString()}
               </span>
             </div>
 
             {days > 0 && (
               <p className="mt-2 text-[10px] leading-5 text-black/30">
-                Final price is calculated from the apartment's stay pricing.
+                Final price is calculated
+                from the apartment's stay
+                pricing.
               </p>
             )}
           </div>
 
-
-          {/* SUBMIT */}
           <button
             type="submit"
             disabled={

@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -76,25 +75,18 @@ function StatusBadge({ status }) {
   const styles = {
     Confirmed:
       "border-emerald-100 bg-emerald-50 text-emerald-700",
-
     Pending:
       "border-amber-100 bg-amber-50 text-amber-700",
-
     Cancelled:
       "border-red-100 bg-red-50 text-red-600",
-
     Completed:
       "border-blue-100 bg-blue-50 text-blue-700",
-
     Paid:
       "border-emerald-100 bg-emerald-50 text-emerald-700",
-
     Unpaid:
       "border-amber-100 bg-amber-50 text-amber-700",
-
     Refunded:
       "border-black/8 bg-black/5 text-black/55",
-
     Failed:
       "border-red-100 bg-red-50 text-red-600",
   };
@@ -274,6 +266,112 @@ function ConfirmModal({
 }
 
 /* ==========================================================
+   IDENTITY DOCUMENTS
+========================================================== */
+
+function IdentityDocuments({ booking }) {
+  const identityDocuments =
+    booking?.identityDocuments || {};
+
+  const documents = [
+    {
+      key: "nidFront",
+      label: "NID Front",
+    },
+    {
+      key: "nidBack",
+      label: "NID Back",
+    },
+    {
+      key: "selfie",
+      label: "Selfie",
+    },
+  ];
+
+  return (
+    <section className="rounded-[28px] border border-black/8 bg-white/70 p-6 sm:p-7">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/5 text-black/45">
+          <FiUser size={17} />
+        </div>
+
+        <div>
+          <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-black/35">
+            Identity
+          </p>
+
+          <h2 className="mt-1 text-lg font-semibold tracking-tight">
+            Identity Documents
+          </h2>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {documents.map((document) => {
+          const image =
+            identityDocuments[document.key];
+
+          return (
+            <div
+              key={document.key}
+              className="overflow-hidden rounded-2xl border border-black/8 bg-[#f8f7f3]"
+            >
+              <div className="flex h-56 items-center justify-center bg-black/[0.025] p-3">
+                {image?.url ? (
+                  <a
+                    href={image.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block h-full w-full"
+                  >
+                    <img
+                      src={image.url}
+                      alt={document.label}
+                      className="h-full w-full rounded-xl object-contain"
+                    />
+                  </a>
+                ) : (
+                  <div className="text-center">
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-black/5">
+                      <FiUser
+                        size={16}
+                        className="text-black/30"
+                      />
+                    </div>
+
+                    <p className="mt-3 text-xs font-medium text-black/50">
+                      No image available
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-black/8 px-4 py-3">
+                <p className="text-xs font-semibold text-black">
+                  {document.label}
+                </p>
+
+                {image?.url && (
+                  <a
+                    href={image.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium text-black/40 transition hover:text-black"
+                  >
+                    Open image
+                    <FiArrowUpRight size={11} />
+                  </a>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* ==========================================================
    PAGE
 ========================================================== */
 
@@ -281,21 +379,16 @@ export default function BookingDetailsPage({ params }) {
   const { id } = use(params);
 
   const [booking, setBooking] = useState(null);
-
   const [loading, setLoading] = useState(true);
-
   const [actionLoading, setActionLoading] =
     useState(false);
-
   const [error, setError] = useState("");
-
   const [savedMessage, setSavedMessage] =
     useState("");
-
   const [modal, setModal] = useState(null);
 
   /* ========================================================
-     LOAD REAL BOOKING
+     LOAD BOOKING
   ======================================================== */
 
   useEffect(() => {
@@ -363,7 +456,7 @@ export default function BookingDetailsPage({ params }) {
   }, [id]);
 
   /* ========================================================
-     MESSAGE
+     SUCCESS MESSAGE
   ======================================================== */
 
   function showMessage(message) {
@@ -553,7 +646,7 @@ export default function BookingDetailsPage({ params }) {
 
         {/* ==================================================
             HEADER
-        =================================================== */}
+        ================================================== */}
 
         <section className="px-4 pb-8 pt-28 sm:px-6 lg:px-10 lg:pt-32">
           <div className="mx-auto max-w-6xl">
@@ -624,7 +717,7 @@ export default function BookingDetailsPage({ params }) {
 
         {/* ==================================================
             CONTENT
-        =================================================== */}
+        ================================================== */}
 
         <section className="px-4 pb-28 sm:px-6 lg:px-10">
           <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -722,6 +815,12 @@ export default function BookingDetailsPage({ params }) {
 
                 </div>
               </section>
+
+              {/* IDENTITY DOCUMENTS */}
+
+              <IdentityDocuments
+                booking={booking}
+              />
 
               {/* STAY */}
 
@@ -885,10 +984,9 @@ export default function BookingDetailsPage({ params }) {
 
                 <div className="mt-6 space-y-3">
 
-                  {/* TRANSACTION ID */}
-
                   <div className="rounded-2xl border border-black/8 bg-[#11110f] p-5 text-white">
                     <div className="flex items-center justify-between gap-4">
+
                       <div>
                         <p className="text-[9px] uppercase tracking-[0.15em] text-white/35">
                           Transaction ID
@@ -901,12 +999,13 @@ export default function BookingDetailsPage({ params }) {
                       </div>
 
                       <StatusBadge
-                        status={booking.paymentStatus}
+                        status={
+                          booking.paymentStatus
+                        }
                       />
+
                     </div>
                   </div>
-
-                  {/* PAYMENT INFORMATION */}
 
                   <div className="grid gap-3 sm:grid-cols-2">
 
@@ -959,8 +1058,6 @@ export default function BookingDetailsPage({ params }) {
 
                   </div>
 
-                  {/* PAYMENT FAILURE */}
-
                   {booking.paymentFailureReason && (
                     <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
                       <p className="text-[9px] uppercase tracking-[0.12em] text-red-500/60">
@@ -979,7 +1076,7 @@ export default function BookingDetailsPage({ params }) {
             </div>
 
             {/* =================================================
-                RIGHT
+                RIGHT SIDEBAR
             ================================================== */}
 
             <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
@@ -1327,7 +1424,7 @@ export default function BookingDetailsPage({ params }) {
       </main>
 
       {/* ======================================================
-          MODAL
+          CONFIRMATION MODAL
       ======================================================= */}
 
       {modal && (
