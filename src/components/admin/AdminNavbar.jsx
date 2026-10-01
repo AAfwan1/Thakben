@@ -39,7 +39,7 @@ export default function AdminNavbar() {
   className="group flex items-center pl-2"
 >
   <img
-    src="/logo/logo.png"
+    src="\logo\nav-logo.webp"
     alt="Thakben"
     className="h-10 w-20 object-contain transition-opacity group-hover:opacity-85"
   />
