@@ -1,13 +1,28 @@
+ 
 import { NextResponse } from "next/server";
 
 import { connectDB } from "@/lib/mongodb";
 import Booking from "@/models/booking";
+import Apartment from "@/models/apartment";
 import { getCurrentAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+const ALLOWED_BOOKING_STATUSES = [
+  "pending",
+  "confirmed",
+  "cancelled",
+  "completed",
+];
+const ALLOWED_PAYMENT_STATUSES = [
+  "unpaid",
+  "paid",
+  "failed",
+  "cancelled",
+  "refunded",
+];
 
 function formatBooking(booking) {
   const apartment = booking.apartmentId;
@@ -22,11 +37,9 @@ function formatBooking(booking) {
 
   return {
     id: booking._id.toString(),
-
     guestName: booking.guestName,
     email: booking.email,
     phone: booking.guestPhone,
-
     apartment: apartment?.title || apartmentSize,
     apartmentSlug,
 
@@ -38,15 +51,92 @@ function formatBooking(booking) {
 
     bookingStatus: booking.status,
     paymentStatus: booking.paymentStatus,
-
     transactionId: booking.transactionId || null,
 
     createdAt: booking.createdAt,
+    updatedAt: booking.updatedAt,
   };
+}
+
+/*
+ * Bangladesh timezone is UTC+06:00.
+ *
+ * Returns today's date in Bangladesh as YYYY-MM-DD.
+ */
+function getTodayInBangladesh() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Dhaka",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/*
+ * Strict YYYY-MM-DD validation.
+ */
+function isValidDateString(value) {
+  return (
+    typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    !Number.isNaN(
+      new Date(`${value}T00:00:00+06:00`).getTime()
+    )
+  );
+}
+
+/*
+ * Strict YYYY-MM validation.
+ */
+function isValidMonthString(value) {
+  return (
+    typeof value === "string" &&
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(value)
+  );
+}
+
+/*
+ * Creates a Bangladesh-time date boundary.
+ *
+ * Example:
+ * 2026-10-04 -> 2026-10-04 00:00:00 UTC+06:00
+ */
+function bangladeshStartOfDay(dateString) {
+  return new Date(`${dateString}T00:00:00+06:00`);
+}
+
+/*
+ * Returns the next Bangladesh calendar day.
+ */
+function bangladeshNextDay(dateString) {
+  const date = bangladeshStartOfDay(dateString);
+  date.setUTCDate(date.getUTCDate() + 1);
+
+  return date;
+}
+
+/*
+ * Returns the next month boundary.
+ *
+ * Example:
+ * 2026-02 -> March 1, 2026 00:00:00 UTC+06:00
+ */
+function bangladeshNextMonth(monthString) {
+  const [year, month] = monthString.split("-").map(Number);
+
+  const nextMonth =
+    month === 12
+      ? `${year + 1}-01`
+      : `${year}-${String(month + 1).padStart(2, "0")}`;
+
+  return new Date(`${nextMonth}-01T00:00:00+06:00`);
 }
 
 export async function GET(request) {
   try {
+    /*
+     * Authentication
+     */
     const admin = await getCurrentAdmin();
 
     if (!admin) {
@@ -63,7 +153,13 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
 
-    const pageParam = Number(searchParams.get("page") || 1);
+    /*
+     * Pagination
+     */
+    const pageParam = Number(
+      searchParams.get("page") || 1
+    );
+
     const limitParam = Number(
       searchParams.get("limit") || DEFAULT_LIMIT
     );
@@ -78,79 +174,250 @@ export async function GET(request) {
         ? Math.min(Math.floor(limitParam), MAX_LIMIT)
         : DEFAULT_LIMIT;
 
-    const search = searchParams.get("search")?.trim() || "";
+    /*
+     * Filters
+     */
+    const search =
+      searchParams.get("search")?.trim() || "";
+
     const bookingStatus =
       searchParams.get("bookingStatus")?.trim() || "";
+
     const paymentStatus =
       searchParams.get("paymentStatus")?.trim() || "";
 
+    const month =
+      searchParams.get("month")?.trim() || "";
+
+    const fromDate =
+      searchParams.get("fromDate")?.trim() || "";
+
+    const toDate =
+      searchParams.get("toDate")?.trim() || "";
+
     const filter = {};
 
+    /*
+     * Booking status
+     */
     if (
       bookingStatus &&
-      ["pending", "confirmed", "cancelled", "completed"].includes(
-        bookingStatus
-      )
+      ALLOWED_BOOKING_STATUSES.includes(bookingStatus)
     ) {
       filter.status = bookingStatus;
     }
 
+    /*
+     * Payment status
+     */
     if (
       paymentStatus &&
-      ["unpaid", "paid", "failed", "cancelled", "refunded"].includes(
-        paymentStatus
-      )
+      ALLOWED_PAYMENT_STATUSES.includes(paymentStatus)
     ) {
       filter.paymentStatus = paymentStatus;
     }
 
+    /*
+     * Search
+     */
     if (search) {
       const searchRegex = new RegExp(
         search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
         "i"
       );
 
-      const matchingApartments = await (
-        await import("@/models/apartment")
-      ).default.find({
-        $or: [
-          { title: searchRegex },
-          {
-            size: Number.isFinite(Number(search))
-              ? Number(search)
-              : -1,
-          },
-        ],
-      }).select("_id");
+      const numericSearch = Number(search);
+
+      const apartmentSearch = [
+        { title: searchRegex },
+      ];
+
+      if (Number.isFinite(numericSearch)) {
+        apartmentSearch.push({
+          size: numericSearch,
+        });
+      }
+
+      const matchingApartments = await Apartment.find({
+        $or: apartmentSearch,
+      })
+        .select("_id")
+        .lean();
 
       filter.$or = [
         { guestName: searchRegex },
         { email: searchRegex },
         { guestPhone: searchRegex },
         { transactionId: searchRegex },
-        ...(matchingApartments.length
-          ? [
-              {
-                apartmentId: {
-                  $in: matchingApartments.map(
-                    (apartment) => apartment._id
-                  ),
-                },
-              },
-            ]
-          : []),
       ];
 
-      if (!filter.$or.length) {
-        filter._id = null;
+      if (matchingApartments.length > 0) {
+        filter.$or.push({
+          apartmentId: {
+            $in: matchingApartments.map(
+              (apartment) => apartment._id
+            ),
+          },
+        });
       }
     }
+
+    /*
+     * =====================================================
+     * DATE FILTERING
+     * =====================================================
+     *
+     * All date filtering uses Booking.createdAt.
+     *
+     * Bangladesh timezone:
+     * UTC+06:00
+     */
+
+    const today = getTodayInBangladesh();
+
+    /*
+     * Month filter
+     *
+     * Example:
+     * month=2026-02
+     *
+     * Includes:
+     * Feb 1 00:00:00
+     * through
+     * Mar 1 00:00:00 exclusive
+     */
+    if (month) {
+      if (!isValidMonthString(month)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid month.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const currentMonth = today.slice(0, 7);
+
+      if (month > currentMonth) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Future months cannot be viewed.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const monthStart = new Date(
+        `${month}-01T00:00:00+06:00`
+      );
+
+      const monthEnd =
+        bangladeshNextMonth(month);
+
+      filter.createdAt = {
+        $gte: monthStart,
+        $lt: monthEnd,
+      };
+    }
+
+    /*
+     * Custom date range
+     *
+     * Example:
+     * fromDate=2025-02-03
+     * toDate=2026-03-04
+     *
+     * The entire "to" day is included.
+     */
+    if (fromDate || toDate) {
+      if (
+        (fromDate && !isValidDateString(fromDate)) ||
+        (toDate && !isValidDateString(toDate))
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid date.",
+          },
+          { status: 400 }
+        );
+      }
+
+      /*
+       * Nobody can request a future date.
+       */
+      if (
+        (fromDate && fromDate > today) ||
+        (toDate && toDate > today)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Future dates cannot be viewed.",
+          },
+          { status: 400 }
+        );
+      }
+
+      /*
+       * From cannot be after To.
+       */
+      if (
+        fromDate &&
+        toDate &&
+        fromDate > toDate
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "From date cannot be after the to date.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const createdAt = {};
+
+      if (fromDate) {
+        createdAt.$gte =
+          bangladeshStartOfDay(fromDate);
+      }
+
+      if (toDate) {
+        /*
+         * Use the next day as an exclusive upper
+         * boundary so the entire selected "to" day
+         * is included.
+         */
+        createdAt.$lt =
+          bangladeshNextDay(toDate);
+      }
+
+      filter.createdAt = createdAt;
+    }
+
+    /*
+     * =====================================================
+     * PAGINATED BOOKINGS
+     * =====================================================
+     */
 
     const skip = (page - 1) * limit;
 
     const [bookings, total] = await Promise.all([
       Booking.find(filter)
-        .populate("apartmentId", "size title")
+        .select(
+          "_id guestName email guestPhone apartmentId checkIn checkOut days totalPrice status paymentStatus transactionId createdAt updatedAt"
+        )
+        .populate(
+          "apartmentId",
+          "size title"
+        )
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -160,31 +427,48 @@ export async function GET(request) {
     ]);
 
     /*
-     * Stats are intentionally calculated separately from pagination.
-     * This keeps your dashboard numbers based on ALL bookings,
-     * not only the 20 currently loaded.
+     * =====================================================
+     * STATS
+     * =====================================================
+     *
+     * Stats use the same filters as the booking list.
+     *
+     * Therefore changing the date filter changes:
+     *
+     * - Confirmed bookings
+     * - Paid revenue
+     *
+     * independently of pagination.
      */
+
+    const statsFilter = {
+      ...filter,
+    };
+
+    /*
+     * Revenue must always be based on paid bookings.
+     *
+     * The frontend already requests paymentStatus=paid,
+     * but this makes the revenue calculation explicit
+     * and safe.
+     */
+    const revenueFilter = {
+      ...statsFilter,
+      paymentStatus: "paid",
+    };
+
     const [
-      totalBookings,
       confirmedBookings,
-      pendingBookings,
       paidRevenueResult,
     ] = await Promise.all([
-      Booking.countDocuments(),
-
       Booking.countDocuments({
+        ...statsFilter,
         status: "confirmed",
-      }),
-
-      Booking.countDocuments({
-        status: "pending",
       }),
 
       Booking.aggregate([
         {
-          $match: {
-            paymentStatus: "paid",
-          },
+          $match: revenueFilter,
         },
         {
           $group: {
@@ -200,7 +484,11 @@ export async function GET(request) {
     const paidRevenue =
       paidRevenueResult[0]?.revenue || 0;
 
-    const formattedBookings = bookings.map(formatBooking);
+    /*
+     * Format response
+     */
+    const formattedBookings =
+      bookings.map(formatBooking);
 
     return NextResponse.json({
       success: true,
@@ -211,18 +499,20 @@ export async function GET(request) {
         page,
         limit,
         total,
-        hasMore: skip + bookings.length < total,
+        hasMore:
+          skip + bookings.length < total,
       },
 
       stats: {
-        totalBookings,
         confirmedBookings,
-        pendingBookings,
         paidRevenue,
       },
     });
   } catch (error) {
-    console.error("Admin bookings GET error:", error);
+    console.error(
+      "Admin bookings GET error:",
+      error
+    );
 
     return NextResponse.json(
       {

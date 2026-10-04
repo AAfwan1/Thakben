@@ -14,6 +14,36 @@ import {
 export const PROPERTY_LOCATION =
   "Bashundhara R/A, Block C, Road 2, House 1/f, Dhaka";
 
+// ============================================
+// APARTMENT BED & CAPACITY CUSTOMIZATION
+// ============================================
+// Add/change apartment sizes here.
+//
+// Example:
+// 330: { beds: 2, adults: 4 }
+//
+// Any apartment size NOT listed here automatically uses:
+// 1 Bed / 2 Adults
+//
+// Only change the numbers inside this section.
+// ============================================
+
+const APARTMENT_CAPACITY = {
+  375: { beds: 2, adults: 4 },
+  500: { beds: 2, adults: 4 },
+  600: { beds: 2, adults: 4 },
+};
+
+// Universal fallback
+const DEFAULT_CAPACITY = {
+  beds: 1,
+  adults: 2,
+};
+
+function getApartmentCapacity(size) {
+  return APARTMENT_CAPACITY[size] || DEFAULT_CAPACITY;
+}
+
 function InfoBox({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-black/[0.08] bg-[#fafafa] px-4 py-3.5">
@@ -76,9 +106,10 @@ function SectionIcon({ icon: Icon }) {
 }
 
 export default function ApartmentInfo({ apartment }) {
+  const { beds, adults } = getApartmentCapacity(apartment.size);
+
   return (
     <div className="space-y-5">
-
       {/* MAIN SUMMARY */}
       <section className="rounded-[30px] border border-black/[0.08] bg-white p-6 sm:p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -124,23 +155,19 @@ export default function ApartmentInfo({ apartment }) {
           <InfoBox
             icon={FiHome}
             label="Sleeping"
-            value={`${apartment.beds || 1} ${
-              apartment.beds === 1 ? "Bed" : "Beds"
-            }`}
+            value={`${beds} ${beds === 1 ? "Bed" : "Beds"}`}
           />
 
           <InfoBox
             icon={FiUsers}
             label="Capacity"
-            value={`${apartment.maxGuests || 2} Adults`}
+            value={`${adults} ${adults === 1 ? "Adult" : "Adults"}`}
           />
         </div>
       </section>
 
-
       {/* OVERVIEW + PRICING */}
       <section className="grid gap-5 lg:grid-cols-[1fr_0.95fr]">
-
         {/* OVERVIEW */}
         <div className="rounded-[30px] border border-black/[0.08] bg-white p-6 sm:p-7">
           <div className="flex items-center gap-3">
@@ -161,7 +188,6 @@ export default function ApartmentInfo({ apartment }) {
             {apartment.description}
           </p>
         </div>
-
 
         {/* PRICING */}
         <div className="rounded-[30px] border border-black/[0.08] bg-white p-6 sm:p-7">
@@ -208,7 +234,6 @@ export default function ApartmentInfo({ apartment }) {
         </div>
       </section>
 
-
       {/* AMENITIES */}
       <section className="rounded-[30px] border border-black/[0.08] bg-white p-6 sm:p-7">
         <div className="flex items-center gap-3">
@@ -228,10 +253,8 @@ export default function ApartmentInfo({ apartment }) {
         <CompactList items={apartment.amenities} />
       </section>
 
-
       {/* ROOM FEATURES + BATHROOM */}
       <section className="grid gap-5 lg:grid-cols-2">
-
         {/* ROOM FEATURES */}
         <div className="rounded-[30px] border border-black/[0.08] bg-white p-6 sm:p-7">
           <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-black/35">
@@ -244,7 +267,6 @@ export default function ApartmentInfo({ apartment }) {
 
           <CompactList items={apartment.roomFeatures} />
         </div>
-
 
         {/* BATHROOM */}
         <div className="rounded-[30px] border border-black/[0.08] bg-white p-6 sm:p-7">
@@ -259,7 +281,6 @@ export default function ApartmentInfo({ apartment }) {
           <CompactList items={apartment.bathroomFacilities} />
         </div>
       </section>
-
 
       {/* POLICIES */}
       <section className="rounded-[30px] border border-black/[0.08] bg-[#fafafa] p-6 sm:p-7">
@@ -295,7 +316,6 @@ export default function ApartmentInfo({ apartment }) {
         </div>
       </section>
 
-
       {/* QUICK BOOKING NOTE */}
       <div className="flex items-center gap-3 rounded-2xl border border-black/[0.08] bg-white px-5 py-4">
         <FiCalendar
@@ -308,7 +328,6 @@ export default function ApartmentInfo({ apartment }) {
           panel to see the exact stay duration and total price.
         </p>
       </div>
-
     </div>
   );
 }

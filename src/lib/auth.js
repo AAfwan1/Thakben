@@ -1,3 +1,4 @@
+
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
@@ -11,6 +12,7 @@ export async function createAuthToken(admin) {
     adminId: admin._id.toString(),
     email: admin.email,
     name: admin.name,
+    role: admin.role,
   })
     .setProtectedHeader({
       alg: "HS256",
@@ -48,7 +50,7 @@ export async function getCurrentAdmin() {
     await connectDB();
 
     const admin = await Admin.findById(payload.adminId).select(
-      "_id name email isActive createdAt updatedAt"
+      "_id name email role isActive createdAt updatedAt"
     );
 
     if (!admin || !admin.isActive) {

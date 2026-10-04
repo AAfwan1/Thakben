@@ -1,28 +1,31 @@
+
 import Link from "next/link";
-import Image from "next/image";
-import {
-  FiArrowLeft,
-  FiArrowUpRight,
-  FiHome,
-} from "react-icons/fi";
+import { FiArrowLeft, FiArrowUpRight, FiHome } from "react-icons/fi";
+
+const HERO_VIDEO_URL =
+  "https://res.cloudinary.com/qds5td8c/video/upload/f_auto,q_auto/v1/thakben/maati-properties-real-estate-tour?_a=BAMAROWO0";
 
 export default function NotFound() {
   return (
     <main className="relative flex min-h-screen items-center overflow-hidden bg-[#080908] px-5 py-28 text-white sm:px-8 lg:px-10">
-
-      {/* Background image */}
-      <div className="absolute inset-0">
-        <Image
-          src="/hero-apartment.webp"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-35"
-        />
+      {/* Background Video */}
+      <div className="absolute inset-0 overflow-hidden">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          tabIndex={-1}
+          disablePictureInPicture
+          disableRemotePlayback
+        >
+          <source src={HERO_VIDEO_URL} type="video/mp4" />
+        </video>
 
         <div className="absolute inset-0 bg-black/65" />
-
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-black/85" />
       </div>
 
@@ -30,10 +33,8 @@ export default function NotFound() {
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.04] blur-[120px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl">
-
         {/* Top label */}
         <div className="flex items-center justify-between">
-
           <Link
             href="/"
             className="group flex items-center gap-3"
@@ -50,15 +51,12 @@ export default function NotFound() {
           <span className="hidden text-[10px] uppercase tracking-[0.3em] text-white/30 sm:block">
             Apartments
           </span>
-
         </div>
 
         {/* Main */}
         <div className="grid min-h-[65vh] items-center gap-12 lg:grid-cols-[1fr_380px]">
-
           {/* Left */}
           <div>
-
             <div className="flex items-center gap-3">
               <span className="h-px w-8 bg-white/30" />
 
@@ -88,7 +86,6 @@ export default function NotFound() {
 
             {/* Buttons */}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-
               <Link
                 href="/"
                 className="group flex items-center justify-center gap-3 rounded-full bg-[#11110f] px-6 py-3.5 text-sm font-medium text-[#f5f4f0] ring-1 ring-white/10 transition-all duration-300 hover:bg-[#1b1b18] hover:ring-white/20 hover:shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
@@ -116,16 +113,12 @@ export default function NotFound() {
 
                 Explore Apartments
               </Link>
-
             </div>
-
           </div>
 
           {/* Right glass card */}
           <div className="rounded-[30px] border border-white/10 bg-black/35 p-2 shadow-2xl backdrop-blur-2xl">
-
             <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.05] p-6 sm:p-7">
-
               <div className="flex items-center justify-between">
                 <span className="text-[10px] uppercase tracking-[0.22em] text-white/35">
                   Thakben
@@ -175,11 +168,8 @@ export default function NotFound() {
                   Dhaka, Bangladesh
                 </p>
               </div>
-
             </div>
-
           </div>
-
         </div>
 
         {/* Bottom */}
@@ -192,7 +182,6 @@ export default function NotFound() {
             Better living, thoughtfully designed.
           </p>
         </div>
-
       </div>
     </main>
   );

@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -28,6 +29,10 @@ const createAdminSchema = z.object({
     .max(128, "Password is too long"),
 });
 
+function isMainAdmin(admin) {
+  return admin?.role === "main";
+}
+
 // GET /api/admin/admins
 export async function GET() {
   try {
@@ -43,10 +48,20 @@ export async function GET() {
       );
     }
 
+    if (!isMainAdmin(currentAdmin)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Forbidden",
+        },
+        { status: 403 }
+      );
+    }
+
     await connectDB();
 
     const admins = await Admin.find({})
-      .select("_id name email isActive createdAt updatedAt")
+      .select("_id name email role isActive createdAt updatedAt")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -82,6 +97,16 @@ export async function POST(request) {
       );
     }
 
+    if (!isMainAdmin(currentAdmin)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Forbidden",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     const result = createAdminSchema.safeParse(body);
@@ -90,7 +115,8 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          message: result.error.issues[0]?.message || "Invalid input",
+          message:
+            result.error.issues[0]?.message || "Invalid input",
         },
         { status: 400 }
       );
@@ -118,17 +144,19 @@ export async function POST(request) {
       name,
       email,
       passwordHash,
+      role: "moderator",
       isActive: true,
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Admin created successfully",
+        message: "Moderator created successfully",
         admin: {
           id: admin._id,
           name: admin.name,
           email: admin.email,
+          role: admin.role,
           isActive: admin.isActive,
           createdAt: admin.createdAt,
         },
@@ -138,7 +166,6 @@ export async function POST(request) {
   } catch (error) {
     console.error("Create admin error:", error);
 
-    // Mongo duplicate-key protection
     if (error?.code === 11000) {
       return NextResponse.json(
         {

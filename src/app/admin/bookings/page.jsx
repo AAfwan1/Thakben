@@ -1,12 +1,11 @@
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   FiArrowUpRight,
-  FiCalendar,
   FiCheckCircle,
-  FiClock,
   FiCreditCard,
   FiLoader,
   FiRefreshCw,
@@ -16,9 +15,7 @@ import {
 } from "react-icons/fi";
 
 const INITIAL_STATS = {
-  totalBookings: 0,
   confirmedBookings: 0,
-  pendingBookings: 0,
   paidRevenue: 0,
 };
 
@@ -32,70 +29,68 @@ function formatDate(value) {
   });
 }
 
+function formatDateTime(value) {
+  if (!value) return "—";
+
+  return new Date(value).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function formatCurrency(amount = 0) {
   return `৳${Number(amount || 0).toLocaleString("en-BD")}`;
 }
 
 function getBookingStatusLabel(status) {
-  const labels = {
-    confirmed: "Confirmed",
-    pending: "Pending",
-    cancelled: "Cancelled",
-    completed: "Completed",
-  };
-
-  return labels[status] || status || "Unknown";
+  return (
+    {
+      confirmed: "Confirmed",
+      pending: "Pending",
+      cancelled: "Cancelled",
+      completed: "Completed",
+    }[status] ||
+    status ||
+    "Unknown"
+  );
 }
 
 function getPaymentStatusLabel(status) {
-  const labels = {
-    paid: "Paid",
-    unpaid: "Pending",
-    failed: "Failed",
-    cancelled: "Cancelled",
-    refunded: "Refunded",
-  };
-
-  return labels[status] || status || "Unknown";
+  return (
+    {
+      paid: "Paid",
+      unpaid: "Pending",
+      failed: "Failed",
+      cancelled: "Cancelled",
+      refunded: "Refunded",
+    }[status] ||
+    status ||
+    "Unknown"
+  );
 }
 
 function StatusBadge({ type, status }) {
-  let className =
-    "border-black/10 bg-black/[0.04] text-black/50";
+  let className = "border-black/10 bg-black/[0.04] text-black/50";
+  const label =
+    type === "booking"
+      ? getBookingStatusLabel(status)
+      : getPaymentStatusLabel(status);
 
-  let label = status;
-
-  if (type === "booking") {
-    label = getBookingStatusLabel(status);
-
-    if (status === "confirmed") {
-      className =
-        "border-emerald-500/20 bg-emerald-500/10 text-emerald-700";
-    } else if (status === "pending") {
-      className =
-        "border-amber-500/20 bg-amber-500/10 text-amber-700";
-    } else if (status === "cancelled") {
-      className =
-        "border-red-500/20 bg-red-500/10 text-red-700";
-    }
-  }
-
-  if (type === "payment") {
-    label = getPaymentStatusLabel(status);
-
-    if (status === "paid") {
-      className =
-        "border-emerald-500/20 bg-emerald-500/10 text-emerald-700";
-    } else if (status === "unpaid") {
-      className =
-        "border-amber-500/20 bg-amber-500/10 text-amber-700";
-    } else if (status === "failed") {
-      className =
-        "border-red-500/20 bg-red-500/10 text-red-700";
-    } else if (status === "refunded") {
-      className =
-        "border-black/10 bg-black/[0.04] text-black/50";
-    }
+  if (status === "confirmed" || status === "paid") {
+    className =
+      "border-emerald-500/20 bg-emerald-500/10 text-emerald-700";
+  } else if (status === "pending" || status === "unpaid") {
+    className =
+      "border-amber-500/20 bg-amber-500/10 text-amber-700";
+  } else if (
+    status === "cancelled" ||
+    status === "failed"
+  ) {
+    className =
+      "border-red-500/20 bg-red-500/10 text-red-700";
   }
 
   return (
@@ -107,12 +102,7 @@ function StatusBadge({ type, status }) {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  loading,
-}) {
+function StatCard({ label, value, icon: Icon, loading }) {
   return (
     <div className="rounded-[24px] border border-black/8 bg-white/60 p-5">
       <div className="flex items-start justify-between gap-4">
@@ -138,46 +128,92 @@ function StatCard({
   );
 }
 
+function SkeletonRows({ mobile = false }) {
+  return Array.from({ length: mobile ? 5 : 6 }).map((_, index) =>
+    mobile ? (
+      <div
+        key={index}
+        className="rounded-[24px] border border-black/8 bg-white/55 p-5"
+      >
+        <div className="h-4 w-32 animate-pulse rounded bg-black/5" />
+        <div className="mt-3 h-3 w-44 animate-pulse rounded bg-black/5" />
+        <div className="mt-5 h-20 animate-pulse rounded-2xl bg-black/5" />
+      </div>
+    ) : (
+      <div
+        key={index}
+        className="grid grid-cols-[1.35fr_0.9fr_1.1fr_0.75fr_0.85fr_0.85fr_1.2fr_40px] items-center gap-4 px-6 py-5"
+      >
+        <div>
+          <div className="h-4 w-32 animate-pulse rounded bg-black/5" />
+          <div className="mt-2 h-3 w-40 animate-pulse rounded bg-black/5" />
+        </div>
+
+        <div className="h-4 w-24 animate-pulse rounded bg-black/5" />
+
+        <div>
+          <div className="h-3 w-28 animate-pulse rounded bg-black/5" />
+          <div className="mt-2 h-3 w-24 animate-pulse rounded bg-black/5" />
+        </div>
+
+        <div className="h-4 w-20 animate-pulse rounded bg-black/5" />
+        <div className="h-6 w-20 animate-pulse rounded-full bg-black/5" />
+        <div className="h-6 w-16 animate-pulse rounded-full bg-black/5" />
+
+        <div>
+          <div className="h-3 w-28 animate-pulse rounded bg-black/5" />
+          <div className="mt-2 h-3 w-24 animate-pulse rounded bg-black/5" />
+        </div>
+
+        <div className="h-8 w-8 animate-pulse rounded-full bg-black/5" />
+      </div>
+    )
+  );
+}
+
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState([]);
-
   const [stats, setStats] = useState(INITIAL_STATS);
 
   const [search, setSearch] = useState("");
   const [bookingStatus, setBookingStatus] = useState("");
-  const [paymentStatus, setPaymentStatus] = useState("");
+
+  const [dateMode, setDateMode] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [page, setPage] = useState(1);
-
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState("");
 
-  const [hasMore, setHasMore] = useState(false);
-
   const observerRef = useRef(null);
-
   const searchTimeoutRef = useRef(null);
 
-  const fetchBookings = useCallback(
-    async ({
-      pageNumber = 1,
-      append = false,
-    } = {}) => {
-      if (append) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
+  // Today's local date: YYYY-MM-DD
+  const today = new Date();
+  const todayString = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
 
+  // Today's month: YYYY-MM
+  const currentMonth = todayString.slice(0, 7);
+
+  const fetchBookings = useCallback(
+    async ({ pageNumber = 1, append = false } = {}) => {
+      append ? setLoadingMore(true) : setLoading(true);
       setError("");
 
       try {
-        const params = new URLSearchParams();
-
-        params.set("page", String(pageNumber));
-        params.set("limit", "20");
+        const params = new URLSearchParams({
+          page: String(pageNumber),
+          limit: "20",
+          paymentStatus: "paid",
+        });
 
         if (search.trim()) {
           params.set("search", search.trim());
@@ -187,8 +223,13 @@ export default function AdminBookingsPage() {
           params.set("bookingStatus", bookingStatus);
         }
 
-        if (paymentStatus) {
-          params.set("paymentStatus", paymentStatus);
+        if (dateMode === "month" && selectedMonth) {
+          params.set("month", selectedMonth);
+        }
+
+        if (dateMode === "range") {
+          if (fromDate) params.set("fromDate", fromDate);
+          if (toDate) params.set("toDate", toDate);
         }
 
         const response = await fetch(
@@ -207,21 +248,14 @@ export default function AdminBookingsPage() {
           );
         }
 
-        if (append) {
-          setBookings((previous) => [
-            ...previous,
-            ...(data.bookings || []),
-          ]);
-        } else {
-          setBookings(data.bookings || []);
-        }
-
-        setStats(data.stats || INITIAL_STATS);
-
-        setHasMore(
-          Boolean(data.pagination?.hasMore)
+        setBookings((previous) =>
+          append
+            ? [...previous, ...(data.bookings || [])]
+            : data.bookings || []
         );
 
+        setStats(data.stats || INITIAL_STATS);
+        setHasMore(Boolean(data.pagination?.hasMore));
         setPage(pageNumber);
       } catch (fetchError) {
         console.error(
@@ -230,71 +264,50 @@ export default function AdminBookingsPage() {
         );
 
         setError(
-          fetchError?.message ||
-            "Failed to load bookings."
+          fetchError?.message || "Failed to load bookings."
         );
 
         if (!append) {
           setBookings([]);
+          setStats(INITIAL_STATS);
         }
       } finally {
         setLoading(false);
         setLoadingMore(false);
       }
     },
-    [search, bookingStatus, paymentStatus]
+    [
+      search,
+      bookingStatus,
+      dateMode,
+      selectedMonth,
+      fromDate,
+      toDate,
+    ]
   );
 
-  /*
-   * Initial load + filter changes.
-   *
-   * Search is debounced so we don't request the API
-   * on every single keystroke.
-   */
+  // Reload whenever filters change.
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
+    clearTimeout(searchTimeoutRef.current);
 
     searchTimeoutRef.current = setTimeout(() => {
-      fetchBookings({
-        pageNumber: 1,
-        append: false,
-      });
+      fetchBookings();
     }, 300);
 
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [
-    search,
-    bookingStatus,
-    paymentStatus,
-    fetchBookings,
-  ]);
+    return () => clearTimeout(searchTimeoutRef.current);
+  }, [fetchBookings]);
 
-  /*
-   * Infinite scrolling.
-   *
-   * When the bottom sentinel becomes visible,
-   * another 20 bookings are loaded.
-   */
+  // Infinite scroll.
   const loadMoreRef = useCallback(
     (node) => {
-      if (loading || loadingMore || !hasMore) {
-        return;
-      }
+      if (!node || loading || loadingMore || !hasMore) return;
 
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      observerRef.current?.disconnect();
 
       observerRef.current = new IntersectionObserver(
-        (entries) => {
+        ([entry]) => {
           if (
-            entries[0]?.isIntersecting &&
+            entry.isIntersecting &&
             !loading &&
             !loadingMore &&
             hasMore
@@ -305,38 +318,86 @@ export default function AdminBookingsPage() {
             });
           }
         },
-        {
-          rootMargin: "500px",
-        }
+        { rootMargin: "500px" }
       );
 
-      if (node) {
-        observerRef.current.observe(node);
-      }
+      observerRef.current.observe(node);
     },
-    [
-      loading,
-      loadingMore,
-      hasMore,
-      page,
-      fetchBookings,
-    ]
+    [loading, loadingMore, hasMore, page, fetchBookings]
   );
 
   useEffect(() => {
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
+      observerRef.current?.disconnect();
     };
   }, []);
 
   const handleRefresh = () => {
-    fetchBookings({
-      pageNumber: 1,
-      append: false,
-    });
+    fetchBookings();
   };
+
+  const handleDateModeChange = (event) => {
+    const value = event.target.value;
+
+    setDateMode(value);
+
+    if (value !== "month") {
+      setSelectedMonth("");
+    }
+
+    if (value !== "range") {
+      setFromDate("");
+      setToDate("");
+    }
+  };
+
+  const handleFromDateChange = (event) => {
+    const value = event.target.value;
+
+    if (value > todayString) {
+      setFromDate(todayString);
+      return;
+    }
+
+    setFromDate(value);
+
+    if (toDate && value > toDate) {
+      setToDate(value);
+    }
+  };
+
+  const handleToDateChange = (event) => {
+    const value = event.target.value;
+
+    if (value > todayString) {
+      setToDate(todayString);
+      return;
+    }
+
+    if (fromDate && value < fromDate) {
+      setToDate(fromDate);
+      return;
+    }
+
+    setToDate(value);
+  };
+
+  const emptyState = (
+    <div className="px-6 py-20 text-center">
+      <FiUsers
+        size={28}
+        className="mx-auto text-black/20"
+      />
+
+      <p className="mt-4 text-sm font-medium">
+        No paid bookings found
+      </p>
+
+      <p className="mt-1 text-xs text-black/35">
+        Try changing your search, status or date filter.
+      </p>
+    </div>
+  );
 
   return (
     <main className="min-h-screen bg-[#f5f4f0] px-4 pb-20 pt-24 text-[#11110f] sm:px-6 lg:px-10 lg:pt-28">
@@ -353,8 +414,8 @@ export default function AdminBookingsPage() {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-black/45">
-              Manage apartment reservations, guest details,
-              booking status and payment information.
+              Manage paid apartment reservations, guest
+              details, booking status and payment information.
             </p>
           </div>
 
@@ -366,50 +427,24 @@ export default function AdminBookingsPage() {
           >
             <FiRefreshCw
               size={13}
-              className={
-                loading
-                  ? "animate-spin"
-                  : ""
-              }
+              className={loading ? "animate-spin" : ""}
             />
             Refresh
           </button>
         </div>
 
         {/* Stats */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <StatCard
-            label="Total bookings"
-            value={stats.totalBookings.toLocaleString(
-              "en-BD"
-            )}
-            icon={FiCalendar}
-            loading={loading}
-          />
-
-          <StatCard
-            label="Confirmed"
-            value={stats.confirmedBookings.toLocaleString(
-              "en-BD"
-            )}
+            label="Confirmed bookings"
+            value={stats.confirmedBookings.toLocaleString("en-BD")}
             icon={FiCheckCircle}
             loading={loading}
           />
 
           <StatCard
-            label="Pending"
-            value={stats.pendingBookings.toLocaleString(
-              "en-BD"
-            )}
-            icon={FiClock}
-            loading={loading}
-          />
-
-          <StatCard
             label="Paid revenue"
-            value={formatCurrency(
-              stats.paidRevenue
-            )}
+            value={formatCurrency(stats.paidRevenue)}
             icon={FiCreditCard}
             loading={loading}
           />
@@ -418,7 +453,6 @@ export default function AdminBookingsPage() {
         {/* Filters */}
         <div className="mt-8 rounded-[28px] border border-black/8 bg-white/55 p-4 sm:p-5">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px]">
-            {/* Search */}
             <div className="relative">
               <FiSearch
                 size={15}
@@ -436,7 +470,6 @@ export default function AdminBookingsPage() {
               />
             </div>
 
-            {/* Booking status */}
             <select
               value={bookingStatus}
               onChange={(event) =>
@@ -444,65 +477,83 @@ export default function AdminBookingsPage() {
               }
               className="rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20"
             >
-              <option value="">
-                All bookings
-              </option>
-              <option value="confirmed">
-                Confirmed
-              </option>
-              <option value="pending">
-                Pending
-              </option>
-              <option value="cancelled">
-                Cancelled
-              </option>
-              <option value="completed">
-                Completed
-              </option>
+              <option value="">All booking statuses</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="completed">Completed</option>
             </select>
 
-            {/* Payment status */}
             <select
-              value={paymentStatus}
-              onChange={(event) =>
-                setPaymentStatus(event.target.value)
-              }
+              value={dateMode}
+              onChange={handleDateModeChange}
               className="rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20"
             >
-              <option value="">
-                All payments
-              </option>
-              <option value="paid">
-                Paid
-              </option>
-              <option value="unpaid">
-                Pending
-              </option>
-              <option value="failed">
-                Failed
-              </option>
-              <option value="refunded">
-                Refunded
-              </option>
-              <option value="cancelled">
-                Cancelled
-              </option>
+              <option value="all">All dates</option>
+              <option value="month">Month & Year</option>
+              <option value="range">Custom date range</option>
             </select>
           </div>
+
+          {dateMode === "month" && (
+            <div className="mt-3">
+              <input
+                type="month"
+                value={selectedMonth}
+                max={currentMonth}
+                onChange={(event) => {
+                  const value = event.target.value;
+
+                  setSelectedMonth(
+                    value > currentMonth ? currentMonth : value
+                  );
+                }}
+                className="w-full rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20 focus:bg-white"
+              />
+            </div>
+          )}
+
+          {dateMode === "range" && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-[10px] font-medium uppercase tracking-[0.16em] text-black/35">
+                  From
+                </label>
+
+                <input
+                  type="date"
+                  value={fromDate}
+                  max={toDate || todayString}
+                  onChange={handleFromDateChange}
+                  className="w-full rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[10px] font-medium uppercase tracking-[0.16em] text-black/35">
+                  To
+                </label>
+
+                <input
+                  type="date"
+                  value={toDate}
+                  min={fromDate || undefined}
+                  max={todayString}
+                  onChange={handleToDateChange}
+                  className="w-full rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20 focus:bg-white"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Error */}
         {error && (
           <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-red-500/15 bg-red-500/5 px-5 py-4">
             <div className="flex items-center gap-3">
-              <FiXCircle
-                size={16}
-                className="text-red-600"
-              />
+              <FiXCircle size={16} className="text-red-600" />
 
-              <p className="text-sm text-red-700">
-                {error}
-              </p>
+              <p className="text-sm text-red-700">{error}</p>
             </div>
 
             <button
@@ -515,140 +566,96 @@ export default function AdminBookingsPage() {
           </div>
         )}
 
-        {/* Desktop table */}
+        {/* Desktop */}
         <div className="mt-6 hidden overflow-hidden rounded-[28px] border border-black/8 bg-white/55 lg:block">
-          <div className="grid grid-cols-[1.5fr_1fr_1.15fr_0.8fr_0.9fr_0.9fr_40px] border-b border-black/8 px-6 py-4 text-[10px] font-medium uppercase tracking-[0.16em] text-black/30">
+          <div className="grid grid-cols-[1.35fr_0.9fr_1.1fr_0.75fr_0.85fr_0.85fr_1.2fr_40px] border-b border-black/8 px-6 py-4 text-[10px] font-medium uppercase tracking-[0.16em] text-black/30">
             <span>Guest</span>
             <span>Apartment</span>
             <span>Stay</span>
             <span>Amount</span>
             <span>Booking</span>
             <span>Payment</span>
+            <span>Timestamps</span>
             <span />
           </div>
 
           {loading ? (
             <div className="divide-y divide-black/6">
-              {Array.from({ length: 6 }).map(
-                (_, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-[1.5fr_1fr_1.15fr_0.8fr_0.9fr_0.9fr_40px] items-center gap-4 px-6 py-5"
-                  >
-                    <div>
-                      <div className="h-4 w-32 animate-pulse rounded bg-black/5" />
-                      <div className="mt-2 h-3 w-40 animate-pulse rounded bg-black/5" />
-                    </div>
-
-                    <div className="h-4 w-24 animate-pulse rounded bg-black/5" />
-
-                    <div>
-                      <div className="h-3 w-28 animate-pulse rounded bg-black/5" />
-                      <div className="mt-2 h-3 w-24 animate-pulse rounded bg-black/5" />
-                    </div>
-
-                    <div className="h-4 w-20 animate-pulse rounded bg-black/5" />
-
-                    <div className="h-6 w-20 animate-pulse rounded-full bg-black/5" />
-
-                    <div className="h-6 w-16 animate-pulse rounded-full bg-black/5" />
-
-                    <div className="h-8 w-8 animate-pulse rounded-full bg-black/5" />
-                  </div>
-                )
-              )}
+              <SkeletonRows />
             </div>
           ) : bookings.length === 0 ? (
-            <div className="px-6 py-20 text-center">
-              <FiUsers
-                size={28}
-                className="mx-auto text-black/20"
-              />
-
-              <p className="mt-4 text-sm font-medium">
-                No bookings found
-              </p>
-
-              <p className="mt-1 text-xs text-black/35">
-                Try changing your search or filters.
-              </p>
-            </div>
+            emptyState
           ) : (
             <div className="divide-y divide-black/6">
               {bookings.map((booking) => (
                 <Link
                   key={booking.id}
                   href={`/admin/bookings/${booking.id}`}
-                  className="group grid grid-cols-[1.5fr_1fr_1.15fr_0.8fr_0.9fr_0.9fr_40px] items-center gap-4 px-6 py-5 transition hover:bg-black/[0.025]"
+                  className="group grid grid-cols-[1.35fr_0.9fr_1.1fr_0.75fr_0.85fr_0.85fr_1.2fr_40px] items-center gap-4 px-6 py-5 transition hover:bg-black/[0.025]"
                 >
-                  {/* Guest */}
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
                       {booking.guestName}
                     </p>
-
                     <p className="mt-1 truncate text-xs text-black/35">
                       {booking.email}
                     </p>
                   </div>
 
-                  {/* Apartment */}
                   <div className="min-w-0">
                     <p className="truncate text-sm">
                       {booking.apartment}
                     </p>
-
                     <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-black/30">
                       Apartment
                     </p>
                   </div>
 
-                  {/* Stay */}
                   <div>
                     <p className="text-xs text-black/65">
                       {formatDate(booking.checkIn)}
                     </p>
-
                     <p className="mt-1 text-xs text-black/35">
                       → {formatDate(booking.checkOut)}
                     </p>
-
                     <p className="mt-1 text-[10px] text-black/25">
                       {booking.duration}{" "}
-                      {booking.duration === 1
-                        ? "day"
-                        : "days"}
+                      {booking.duration === 1 ? "day" : "days"}
                     </p>
                   </div>
 
-                  {/* Amount */}
                   <p className="text-sm font-medium">
-                    {formatCurrency(
-                      booking.amount
-                    )}
+                    {formatCurrency(booking.amount)}
                   </p>
 
-                  {/* Booking status */}
-                  <div>
-                    <StatusBadge
-                      type="booking"
-                      status={booking.bookingStatus}
-                    />
+                  <StatusBadge
+                    type="booking"
+                    status={booking.bookingStatus}
+                  />
+
+                  <StatusBadge
+                    type="payment"
+                    status={booking.paymentStatus}
+                  />
+
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-black/60">
+                      Created
+                    </p>
+                    <p className="truncate text-[11px] text-black/40">
+                      {formatDateTime(booking.createdAt)}
+                    </p>
+
+                    <p className="mt-2 text-[11px] text-black/60">
+                      Updated
+                    </p>
+                    <p className="truncate text-[11px] text-black/40">
+                      {formatDateTime(booking.updatedAt)}
+                    </p>
                   </div>
 
-                  {/* Payment */}
-                  <div>
-                    <StatusBadge
-                      type="payment"
-                      status={booking.paymentStatus}
-                    />
-                  </div>
-
-                  {/* Arrow */}
                   <div className="flex h-8 w-8 items-center justify-center rounded-full border border-black/8 bg-white transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
-                    <FiArrowUpRight
-                      size={14}
-                    />
+                    <FiArrowUpRight size={14} />
                   </div>
                 </Link>
               ))}
@@ -656,34 +663,21 @@ export default function AdminBookingsPage() {
           )}
         </div>
 
-        {/* Mobile cards */}
+        {/* Mobile */}
         <div className="mt-6 space-y-3 lg:hidden">
           {loading ? (
-            Array.from({ length: 5 }).map(
-              (_, index) => (
-                <div
-                  key={index}
-                  className="rounded-[24px] border border-black/8 bg-white/55 p-5"
-                >
-                  <div className="h-4 w-32 animate-pulse rounded bg-black/5" />
-                  <div className="mt-3 h-3 w-44 animate-pulse rounded bg-black/5" />
-                  <div className="mt-5 h-20 animate-pulse rounded-2xl bg-black/5" />
-                </div>
-              )
-            )
+            <SkeletonRows mobile />
           ) : bookings.length === 0 ? (
             <div className="rounded-[24px] border border-black/8 bg-white/55 px-5 py-16 text-center">
               <FiUsers
                 size={28}
                 className="mx-auto text-black/20"
               />
-
               <p className="mt-4 text-sm font-medium">
-                No bookings found
+                No paid bookings found
               </p>
-
               <p className="mt-1 text-xs text-black/35">
-                Try changing your search or filters.
+                Try changing your search, status or date filter.
               </p>
             </div>
           ) : (
@@ -698,16 +692,13 @@ export default function AdminBookingsPage() {
                     <p className="truncate text-sm font-medium">
                       {booking.guestName}
                     </p>
-
                     <p className="mt-1 truncate text-xs text-black/35">
                       {booking.email}
                     </p>
                   </div>
 
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/8 bg-white">
-                    <FiArrowUpRight
-                      size={14}
-                    />
+                    <FiArrowUpRight size={14} />
                   </div>
                 </div>
 
@@ -717,16 +708,13 @@ export default function AdminBookingsPage() {
                       <p className="text-xs text-black/40">
                         Apartment
                       </p>
-
                       <p className="mt-1 text-sm">
                         {booking.apartment}
                       </p>
                     </div>
 
                     <p className="text-sm font-medium">
-                      {formatCurrency(
-                        booking.amount
-                      )}
+                      {formatCurrency(booking.amount)}
                     </p>
                   </div>
 
@@ -735,23 +723,15 @@ export default function AdminBookingsPage() {
                       <p className="text-xs text-black/40">
                         Stay
                       </p>
-
                       <p className="mt-1 text-xs">
-                        {formatDate(
-                          booking.checkIn
-                        )}{" "}
-                        →{" "}
-                        {formatDate(
-                          booking.checkOut
-                        )}
+                        {formatDate(booking.checkIn)} →{" "}
+                        {formatDate(booking.checkOut)}
                       </p>
                     </div>
 
                     <p className="text-[10px] text-black/35">
                       {booking.duration}{" "}
-                      {booking.duration === 1
-                        ? "day"
-                        : "days"}
+                      {booking.duration === 1 ? "day" : "days"}
                     </p>
                   </div>
                 </div>
@@ -759,24 +739,41 @@ export default function AdminBookingsPage() {
                 <div className="mt-4 flex flex-wrap gap-2">
                   <StatusBadge
                     type="booking"
-                    status={
-                      booking.bookingStatus
-                    }
+                    status={booking.bookingStatus}
                   />
-
                   <StatusBadge
                     type="payment"
-                    status={
-                      booking.paymentStatus
-                    }
+                    status={booking.paymentStatus}
                   />
+                </div>
+
+                <div className="mt-4 border-t border-black/6 pt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
+                        Created
+                      </p>
+                      <p className="mt-1 text-[11px] text-black/50">
+                        {formatDateTime(booking.createdAt)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
+                        Updated
+                      </p>
+                      <p className="mt-1 text-[11px] text-black/50">
+                        {formatDateTime(booking.updatedAt)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </Link>
             ))
           )}
         </div>
 
-        {/* Lazy loading sentinel */}
+        {/* Infinite-scroll sentinel */}
         {!loading && bookings.length > 0 && (
           <div
             ref={loadMoreRef}
@@ -796,7 +793,7 @@ export default function AdminBookingsPage() {
               </span>
             ) : (
               <span className="text-[10px] text-black/20">
-                All bookings loaded
+                All paid bookings loaded
               </span>
             )}
           </div>

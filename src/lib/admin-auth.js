@@ -22,7 +22,7 @@ export async function getCurrentAdmin() {
     await connectDB();
 
     const admin = await Admin.findById(payload.adminId).select(
-      "_id name email isActive createdAt updatedAt"
+      "_id name email role isActive createdAt updatedAt"
     );
 
     if (!admin || !admin.isActive) {

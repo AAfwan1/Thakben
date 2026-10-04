@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -45,6 +46,10 @@ const updateAdminSchema = z
     }
   );
 
+function isMainAdmin(admin) {
+  return admin?.role === "main";
+}
+
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
@@ -64,6 +69,16 @@ export async function GET(request, { params }) {
       );
     }
 
+    if (!isMainAdmin(currentAdmin)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Forbidden",
+        },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     if (!isValidObjectId(id)) {
@@ -79,7 +94,7 @@ export async function GET(request, { params }) {
     await connectDB();
 
     const admin = await Admin.findById(id)
-      .select("_id name email isActive createdAt updatedAt")
+      .select("_id name email role isActive createdAt updatedAt")
       .lean();
 
     if (!admin) {
@@ -124,6 +139,16 @@ export async function PATCH(request, { params }) {
       );
     }
 
+    if (!isMainAdmin(currentAdmin)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Forbidden",
+        },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     if (!isValidObjectId(id)) {
@@ -144,7 +169,8 @@ export async function PATCH(request, { params }) {
       return NextResponse.json(
         {
           success: false,
-          message: result.error.issues[0]?.message || "Invalid input",
+          message:
+            result.error.issues[0]?.message || "Invalid input",
         },
         { status: 400 }
       );
@@ -204,7 +230,8 @@ export async function PATCH(request, { params }) {
         return NextResponse.json(
           {
             success: false,
-            message: "You cannot deactivate the last active admin",
+            message:
+              "You cannot deactivate the last active admin",
           },
           { status: 400 }
         );
@@ -226,6 +253,7 @@ export async function PATCH(request, { params }) {
         id: admin._id,
         name: admin.name,
         email: admin.email,
+        role: admin.role,
         isActive: admin.isActive,
         createdAt: admin.createdAt,
         updatedAt: admin.updatedAt,
@@ -269,6 +297,16 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    if (!isMainAdmin(currentAdmin)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Forbidden",
+        },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     if (!isValidObjectId(id)) {
@@ -305,7 +343,8 @@ export async function DELETE(request, { params }) {
         return NextResponse.json(
           {
             success: false,
-            message: "You cannot delete the last active admin",
+            message:
+              "You cannot delete the last active admin",
           },
           { status: 400 }
         );

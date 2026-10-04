@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
@@ -26,7 +27,28 @@ export async function middleware(request) {
   }
 
   try {
-    await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret);
+
+    // ============================================
+    // MAIN ADMIN ONLY
+    // ============================================
+    // These frontend admin sections are completely
+    // inaccessible to moderators.
+    //
+    // /admin/admins
+    // /admin/apartments
+    // /admin/apartments/...
+    // ============================================
+
+    const mainAdminOnly =
+      pathname === "/admin/admins" ||
+      pathname.startsWith("/admin/apartments");
+
+    if (mainAdminOnly && payload?.role !== "main") {
+return NextResponse.rewrite(
+  new URL("/__not-found", request.url)
+);
+    }
 
     return NextResponse.next();
   } catch {
@@ -44,6 +66,5 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/api/admin/:path*",
-    
   ],
 };

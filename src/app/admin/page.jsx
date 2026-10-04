@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,9 +8,6 @@ import {
   FiArrowUpRight,
   FiCalendar,
   FiCheckCircle,
-  FiClock,
-  FiHome,
-  FiUsers,
   FiTrendingUp,
   FiChevronRight,
   FiLoader,
@@ -172,20 +170,6 @@ export default function AdminDashboard() {
 
   const stats = [
     {
-      label: "Total Apartments",
-      value:
-        data?.stats?.totalApartments ?? "—",
-      description: "Apartments listed",
-      icon: FiHome,
-    },
-    {
-      label: "Available Today",
-      value:
-        data?.stats?.availableToday ?? "—",
-      description: "Currently available",
-      icon: FiCheckCircle,
-    },
-    {
       label: "Active Bookings",
       value:
         data?.stats?.activeBookings ?? "—",
@@ -214,15 +198,9 @@ export default function AdminDashboard() {
         <div className="mx-auto max-w-7xl">
           <div
             className="
-              flex
-              flex-col
-              gap-5
               border-b
               border-black/10
               pb-8
-              md:flex-row
-              md:items-end
-              md:justify-between
             "
           >
             <div>
@@ -263,53 +241,6 @@ export default function AdminDashboard() {
                 availability from one place.
               </p>
             </div>
-
-            <Link
-              href="/admin/apartments"
-              className="
-                group
-                inline-flex
-                w-fit
-                items-center
-                gap-3
-                rounded-full
-                bg-[#11110f]
-                px-5
-                py-3.5
-                text-sm
-                font-medium
-                !text-[#f5f4f0]
-                transition-all
-                duration-300
-                hover:-translate-y-0.5
-                hover:bg-black
-              "
-            >
-              Manage Apartments
-
-              <span
-                className="
-                  flex
-                  h-7
-                  w-7
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-white/10
-                "
-              >
-                <FiArrowUpRight
-                  size={14}
-                  className="
-                    !text-[#f5f4f0]
-                    transition-transform
-                    duration-300
-                    group-hover:translate-x-0.5
-                    group-hover:-translate-y-0.5
-                  "
-                />
-              </span>
-            </Link>
           </div>
         </div>
       </section>
@@ -352,7 +283,7 @@ export default function AdminDashboard() {
 
           {/* STATISTICS */}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             {stats.map((stat) => (
               <StatCard
                 key={stat.label}
@@ -361,219 +292,30 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* MAIN GRID */}
+          {/* UPCOMING BOOKINGS */}
 
-          <div
+          <section
             className="
               mt-6
-              grid
-              gap-6
-              lg:grid-cols-[minmax(0,1fr)_360px]
+              overflow-hidden
+              rounded-[28px]
+              border
+              border-black/8
+              bg-white/70
             "
           >
-            {/* UPCOMING BOOKINGS */}
-
-            <section
+            <div
               className="
-                overflow-hidden
-                rounded-[28px]
-                border
+                flex
+                items-center
+                justify-between
+                gap-4
+                border-b
                 border-black/8
-                bg-white/70
+                p-6
               "
             >
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-between
-                  gap-4
-                  border-b
-                  border-black/8
-                  p-6
-                "
-              >
-                <div>
-                  <p
-                    className="
-                      text-[9px]
-                      font-medium
-                      uppercase
-                      tracking-[0.2em]
-                      text-black/35
-                    "
-                  >
-                    Reservations
-                  </p>
-
-                  <h2
-                    className="
-                      mt-1
-                      text-lg
-                      font-medium
-                      tracking-tight
-                    "
-                  >
-                    Upcoming bookings
-                  </h2>
-                </div>
-
-                <Link
-                  href="/admin/bookings"
-                  className="
-                    inline-flex
-                    items-center
-                    gap-1.5
-                    text-xs
-                    font-medium
-                    text-black/45
-                    transition
-                    hover:text-black
-                  "
-                >
-                  View all
-                  <FiChevronRight size={13} />
-                </Link>
-              </div>
-
-              <div className="divide-y divide-black/6">
-                {loading ? (
-                  <div className="flex items-center justify-center py-14">
-                    <FiLoader
-                      size={20}
-                      className="animate-spin text-black/30"
-                    />
-                  </div>
-                ) : upcomingBookings.length === 0 ? (
-                  <div className="px-6 py-14 text-center">
-                    <p className="text-sm font-medium">
-                      No upcoming bookings
-                    </p>
-
-                    <p className="mt-1 text-xs text-black/35">
-                      New reservations will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  upcomingBookings.map((booking) => (
-                    <Link
-                      key={booking.id}
-                      href={`/admin/bookings/${booking.id}`}
-                      className="
-                        group
-                        block
-                        px-6
-                        py-5
-                        transition
-                        hover:bg-black/[0.025]
-                      "
-                    >
-                      <div
-                        className="
-                          flex
-                          flex-col
-                          gap-4
-                          sm:flex-row
-                          sm:items-center
-                          sm:justify-between
-                        "
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p
-                              className="
-                                text-sm
-                                font-medium
-                                text-[#11110f]
-                              "
-                            >
-                              {booking.guest}
-                            </p>
-
-                            <StatusBadge
-                              status={booking.status}
-                            />
-                          </div>
-
-                          <p
-                            className="
-                              mt-1
-                              text-xs
-                              text-black/40
-                            "
-                          >
-                            {booking.apartment}
-                          </p>
-                        </div>
-
-                        <div
-                          className="
-                            shrink-0
-                            text-left
-                            sm:text-right
-                          "
-                        >
-                          <p
-                            className="
-                              text-xs
-                              font-medium
-                              text-black/55
-                            "
-                          >
-                            {formatDate(
-                              booking.checkIn
-                            )}
-                          </p>
-
-                          <p
-                            className="
-                              mt-1
-                              text-[10px]
-                              text-black/30
-                            "
-                          >
-                            Check-out{" "}
-                            {formatDate(
-                              booking.checkOut
-                            )}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div
-                        className="
-                          mt-3
-                          flex
-                          items-center
-                          justify-between
-                          text-[10px]
-                          text-black/25
-                        "
-                      >
-                        <span>
-                          {booking.displayId}
-                        </span>
-
-                        <FiArrowUpRight
-                          size={13}
-                          className="
-                            transition-transform
-                            duration-300
-                            group-hover:translate-x-0.5
-                            group-hover:-translate-y-0.5
-                          "
-                        />
-                      </div>
-                    </Link>
-                  ))
-                )}
-              </div>
-            </section>
-
-            {/* QUICK ACTIONS */}
-
-            <section>
-              <div className="mb-4">
+              <div>
                 <p
                   className="
                     text-[9px]
@@ -583,7 +325,7 @@ export default function AdminDashboard() {
                     text-black/35
                   "
                 >
-                  Quick access
+                  Reservations
                 </p>
 
                 <h2
@@ -594,230 +336,159 @@ export default function AdminDashboard() {
                     tracking-tight
                   "
                 >
-                  Manage
+                  Upcoming bookings
                 </h2>
               </div>
 
-              <div className="space-y-3">
-                {[
-                  {
-                    title: "Manage Apartments",
-                    description:
-                      "Update apartments, pricing and facilities.",
-                    href: "/admin/apartments",
-                    icon: FiHome,
-                  },
-                  {
-                    title: "View Bookings",
-                    description:
-                      "Check and manage customer reservations.",
-                    href: "/admin/bookings",
-                    icon: FiCalendar,
-                  },
-                  {
-                    title: "Check Availability",
-                    description:
-                      "View booked dates across apartments.",
-                    href: "/admin/availability",
-                    icon: FiClock,
-                  },
-                ].map((action) => {
-                  const Icon = action.icon;
+              <Link
+                href="/admin/bookings"
+                className="
+                  inline-flex
+                  items-center
+                  gap-1.5
+                  text-xs
+                  font-medium
+                  text-black/45
+                  transition
+                  hover:text-black
+                "
+              >
+                View all
+                <FiChevronRight size={13} />
+              </Link>
+            </div>
 
-                  return (
-                    <Link
-                      key={action.title}
-                      href={action.href}
+            <div className="divide-y divide-black/6">
+              {loading ? (
+                <div className="flex items-center justify-center py-14">
+                  <FiLoader
+                    size={20}
+                    className="animate-spin text-black/30"
+                  />
+                </div>
+              ) : upcomingBookings.length === 0 ? (
+                <div className="px-6 py-14 text-center">
+                  <p className="text-sm font-medium">
+                    No upcoming bookings
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/35">
+                    New reservations will appear here.
+                  </p>
+                </div>
+              ) : (
+                upcomingBookings.map((booking) => (
+                  <Link
+                    key={booking.id}
+                    href={`/admin/bookings/${booking.id}`}
+                    className="
+                      group
+                      block
+                      px-6
+                      py-5
+                      transition
+                      hover:bg-black/[0.025]
+                    "
+                  >
+                    <div
                       className="
-                        group
                         flex
-                        items-center
+                        flex-col
                         gap-4
-                        rounded-[22px]
-                        border
-                        border-black/8
-                        bg-white/70
-                        p-4
-                        transition-all
-                        duration-300
-                        hover:-translate-y-0.5
-                        hover:bg-white
-                        hover:shadow-[0_12px_35px_rgba(0,0,0,0.05)]
+                        sm:flex-row
+                        sm:items-center
+                        sm:justify-between
                       "
                     >
-                      <div
-                        className="
-                          flex
-                          h-10
-                          w-10
-                          shrink-0
-                          items-center
-                          justify-center
-                          rounded-xl
-                          bg-[#11110f]
-                          text-[#f5f4f0]
-                        "
-                      >
-                        <Icon size={15} />
-                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p
+                            className="
+                              text-sm
+                              font-medium
+                              text-[#11110f]
+                            "
+                          >
+                            {booking.guest}
+                          </p>
 
-                      <div className="min-w-0 flex-1">
+                          <StatusBadge
+                            status={booking.status}
+                          />
+                        </div>
+
                         <p
                           className="
-                            text-sm
-                            font-medium
-                            text-[#11110f]
+                            mt-1
+                            text-xs
+                            text-black/40
                           "
                         >
-                          {action.title}
+                          {booking.apartment}
+                        </p>
+                      </div>
+
+                      <div
+                        className="
+                          shrink-0
+                          text-left
+                          sm:text-right
+                        "
+                      >
+                        <p
+                          className="
+                            text-xs
+                            font-medium
+                            text-black/55
+                          "
+                        >
+                          {formatDate(
+                            booking.checkIn
+                          )}
                         </p>
 
                         <p
                           className="
                             mt-1
                             text-[10px]
-                            leading-4
-                            text-black/35
+                            text-black/30
                           "
                         >
-                          {action.description}
+                          Check-out{" "}
+                          {formatDate(
+                            booking.checkOut
+                          )}
                         </p>
                       </div>
+                    </div>
 
-                      <FiChevronRight
-                        size={15}
+                    <div
+                      className="
+                        mt-3
+                        flex
+                        items-center
+                        justify-between
+                        text-[10px]
+                        text-black/25
+                      "
+                    >
+                      <span>
+                        {booking.displayId}
+                      </span>
+
+                      <FiArrowUpRight
+                        size={13}
                         className="
-                          shrink-0
-                          text-black/20
                           transition-transform
                           duration-300
                           group-hover:translate-x-0.5
-                          group-hover:text-black/50
+                          group-hover:-translate-y-0.5
                         "
                       />
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
-
-          {/* AVAILABILITY */}
-
-          <section
-            className="
-              mt-6
-              rounded-[28px]
-              border
-              border-black/8
-              bg-[#11110f]
-              p-6
-              text-white
-              sm:p-7
-            "
-          >
-            <div
-              className="
-                flex
-                flex-col
-                gap-5
-                md:flex-row
-                md:items-center
-                md:justify-between
-              "
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className="
-                    flex
-                    h-10
-                    w-10
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-xl
-                    bg-white/10
-                  "
-                >
-                  <FiUsers size={16} />
-                </div>
-
-                <div>
-                  <p
-                    className="
-                      text-[9px]
-                      font-medium
-                      uppercase
-                      tracking-[0.2em]
-                      text-white/35
-                    "
-                  >
-                    Availability
-                  </p>
-
-                  <h2
-                    className="
-                      mt-1
-                      text-lg
-                      font-medium
-                      tracking-tight
-                    "
-                  >
-                    {loading
-                      ? "Loading availability..."
-                      : `${data?.stats?.availableToday ?? 0} of ${
-                          data?.stats?.totalApartments ?? 0
-                        } apartments available`}
-                  </h2>
-
-                  <p
-                    className="
-                      mt-1
-                      text-xs
-                      leading-5
-                      text-white/35
-                    "
-                  >
-                    Review the full calendar to see
-                    upcoming reservations.
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                href="/admin/availability"
-                className="
-                  group
-                  inline-flex
-                  w-fit
-                  shrink-0
-                  items-center
-                  gap-2
-                  rounded-full
-                  border
-                  border-white/10
-                  bg-white/10
-                  px-4
-                  py-2.5
-                  text-xs
-                  font-medium
-                  text-white
-                  transition
-                  hover:bg-white/15
-                "
-              >
-                Open Calendar
-
-                <FiArrowUpRight
-                  size={13}
-                  className="
-                    transition-transform
-                    duration-300
-                    group-hover:translate-x-0.5
-                    group-hover:-translate-y-0.5
-                  "
-                />
-              </Link>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </section>
         </div>
