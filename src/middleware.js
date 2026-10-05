@@ -40,9 +40,11 @@ export async function middleware(request) {
     // /admin/apartments/...
     // ============================================
 
-    const mainAdminOnly =
-      pathname === "/admin/admins" ||
-      pathname.startsWith("/admin/apartments");
+const mainAdminOnly =
+  pathname === "/admin/admins" ||
+  pathname.startsWith("/admin/apartments") ||
+  pathname === "/admin/availability" ||
+  pathname.startsWith("/api/admin/availability");
 
     if (mainAdminOnly && payload?.role !== "main") {
 return NextResponse.rewrite(

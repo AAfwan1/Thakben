@@ -15,7 +15,6 @@ import {
 const ADMIN_LINKS = [
   { label: "Dashboard", href: "/admin", icon: FiHome },
   { label: "Bookings", href: "/admin/bookings", icon: FiCalendar },
-  { label: "Availability", href: "/admin/availability", icon: FiClock },
   { label: "Logout", href: "/admin/logout", icon: FiLogOut },
 ];
 
@@ -23,6 +22,12 @@ const APARTMENTS_LINK = {
   label: "Apartments",
   href: "/admin/apartments",
   icon: FiHome,
+};
+
+const Availability_LInk = {
+  label: "Availability",
+  href: "/admin/availability",
+  icon: FiClock,
 };
 
 const NAV_LINK =
@@ -34,13 +39,15 @@ const MOBILE_LINK =
 export default function AdminNavbar({ isMainAdmin }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const navLinks = isMainAdmin
-    ? [
-        ADMIN_LINKS[0],
-        APARTMENTS_LINK,
-        ...ADMIN_LINKS.slice(1),
-      ]
-    : ADMIN_LINKS;
+const navLinks = isMainAdmin
+  ? [
+      ADMIN_LINKS[0], // Dashboard
+      APARTMENTS_LINK,
+      ADMIN_LINKS[1], // Bookings
+      Availability_LInk,
+      ADMIN_LINKS[2], // Logout
+    ]
+  : ADMIN_LINKS;
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 px-4 pt-4 sm:px-6">
