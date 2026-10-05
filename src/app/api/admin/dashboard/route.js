@@ -1,9 +1,8 @@
+
 import { NextResponse } from "next/server";
 
 import { connectDB } from "@/lib/mongodb";
-import Apartment from "@/models/apartment";
 import Booking from "@/models/booking";
-import UnavailableDate from "@/models/unavailableDate";
 
 export const runtime = "nodejs";
 
@@ -13,106 +12,18 @@ export async function GET() {
 
     const now = new Date();
 
-    // Today: YYYY-MM-DD
-    const today = now.toISOString().split("T")[0];
-
-    // Start/end of current month
-    const monthStart = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        1
-      )
-    );
-
-    const nextMonthStart = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth() + 1,
-        1
-      )
-    );
-
     /*
     ============================================================
-    TOTAL APARTMENTS
-    ============================================================
-    */
-
-    const totalApartments =
-      await Apartment.countDocuments({
-        isActive: true,
-      });
-
-    /*
-    ============================================================
-    TODAY'S BOOKED APARTMENTS
+    TODAY
     ============================================================
     */
 
     const todayStart = new Date(
-      `${today}T00:00:00.000Z`
-    );
-
-    const todayEnd = new Date(
-      `${today}T23:59:59.999Z`
-    );
-
-    const todayBookings = await Booking.find({
-      status: {
-        $in: ["pending", "confirmed"],
-      },
-
-      checkIn: {
-        $lt: todayEnd,
-      },
-
-      checkOut: {
-        $gt: todayStart,
-      },
-    })
-      .select("apartmentId")
-      .lean();
-
-    const bookedApartmentIds =
-      todayBookings.map((booking) =>
-        booking.apartmentId.toString()
-      );
-
-    /*
-    ============================================================
-    TODAY'S MANUALLY UNAVAILABLE APARTMENTS
-    ============================================================
-    */
-
-    const todayUnavailable =
-      await UnavailableDate.find({
-        date: today,
-      })
-        .select("apartmentId")
-        .lean();
-
-    const unavailableApartmentIds =
-      todayUnavailable.map((item) =>
-        item.apartmentId.toString()
-      );
-
-    /*
-    ============================================================
-    UNIQUE OCCUPIED / UNAVAILABLE APARTMENTS
-    ============================================================
-    */
-
-    const occupiedApartmentIds =
-      new Set([
-        ...bookedApartmentIds,
-        ...unavailableApartmentIds,
-      ]);
-
-    const availableToday = Math.max(
-      totalApartments -
-        occupiedApartmentIds.size,
-      0
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate()
+      )
     );
 
     /*
@@ -133,6 +44,22 @@ export async function GET() {
     MONTHLY REVENUE
     ============================================================
     */
+
+    const monthStart = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        1
+      )
+    );
+
+    const nextMonthStart = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth() + 1,
+        1
+      )
+    );
 
     const revenueResult =
       await Booking.aggregate([
@@ -163,18 +90,18 @@ export async function GET() {
 
     /*
     ============================================================
-    UPCOMING BOOKINGS
+    UPCOMING CHECK-INS
     ============================================================
     */
 
-    const upcomingBookings =
+    const upcomingCheckIns =
       await Booking.find({
         status: {
           $in: ["pending", "confirmed"],
         },
 
-        checkOut: {
-          $gte: now,
+        checkIn: {
+          $gte: todayStart,
         },
       })
         .populate(
@@ -187,41 +114,70 @@ export async function GET() {
         .limit(5)
         .lean();
 
-    const bookings =
-      upcomingBookings.map((booking) => ({
-        id: booking._id.toString(),
+    /*
+    ============================================================
+    UPCOMING CHECK-OUTS
+    ============================================================
+    */
 
-        displayId: `BK-${booking._id
-          .toString()
-          .slice(-6)
-          .toUpperCase()}`,
+    const upcomingCheckOuts =
+      await Booking.find({
+        status: {
+          $in: ["pending", "confirmed"],
+        },
 
-        apartment:
-          booking.apartmentId?.title ||
-          (booking.apartmentId?.size
-            ? `${booking.apartmentId.size} sq.ft. Apartment`
-            : "Apartment"),
+        checkOut: {
+          $gte: todayStart,
+        },
+      })
+        .populate(
+          "apartmentId",
+          "size title"
+        )
+        .sort({
+          checkOut: 1,
+        })
+        .limit(5)
+        .lean();
 
-        guest: booking.guestName,
+    /*
+    ============================================================
+    FORMAT BOOKING
+    ============================================================
+    */
 
-        checkIn: booking.checkIn
-          ? booking.checkIn
-              .toISOString()
-              .split("T")[0]
-          : null,
+    const formatBooking = (booking) => ({
+      id: booking._id.toString(),
 
-        checkOut: booking.checkOut
-          ? booking.checkOut
-              .toISOString()
-              .split("T")[0]
-          : null,
+      displayId: `BK-${booking._id
+        .toString()
+        .slice(-6)
+        .toUpperCase()}`,
 
-        status:
-          booking.status
-            .charAt(0)
-            .toUpperCase() +
-          booking.status.slice(1),
-      }));
+      apartment:
+        booking.apartmentId?.title ||
+        (booking.apartmentId?.size
+          ? `${booking.apartmentId.size} sq.ft. Apartment`
+          : "Apartment"),
+
+      guest: booking.guestName,
+
+      checkIn: booking.checkIn
+        ? booking.checkIn
+            .toISOString()
+            .split("T")[0]
+        : null,
+
+      checkOut: booking.checkOut
+        ? booking.checkOut
+            .toISOString()
+            .split("T")[0]
+        : null,
+
+      status:
+        booking.status.charAt(0).toUpperCase() +
+        booking.status.slice(1),
+    });
 
     /*
     ============================================================
@@ -233,13 +189,15 @@ export async function GET() {
       success: true,
 
       stats: {
-        totalApartments,
-        availableToday,
         activeBookings,
         monthlyRevenue,
       },
 
-      upcomingBookings: bookings,
+      upcomingCheckIns:
+        upcomingCheckIns.map(formatBooking),
+
+      upcomingCheckOuts:
+        upcomingCheckOuts.map(formatBooking),
     });
   } catch (error) {
     console.error(

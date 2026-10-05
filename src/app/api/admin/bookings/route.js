@@ -418,7 +418,7 @@ export async function GET(request) {
           "apartmentId",
           "size title"
         )
-        .sort({ createdAt: -1 })
+        .sort({checkIn: 1})
         .skip(skip)
         .limit(limit)
         .lean(),

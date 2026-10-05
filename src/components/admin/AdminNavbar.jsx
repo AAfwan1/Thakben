@@ -14,7 +14,6 @@ import {
 
 const ADMIN_LINKS = [
   { label: "Dashboard", href: "/admin", icon: FiHome },
-  { label: "Apartments", href: "/admin/apartments", icon: FiHome },
   { label: "Bookings", href: "/admin/bookings", icon: FiCalendar },
   { label: "Availability", href: "/admin/availability", icon: FiClock },
   { label: "Logout", href: "/admin/logout", icon: FiLogOut },

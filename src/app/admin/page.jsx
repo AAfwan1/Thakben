@@ -7,7 +7,6 @@ import Link from "next/link";
 import {
   FiArrowUpRight,
   FiCalendar,
-  FiCheckCircle,
   FiTrendingUp,
   FiChevronRight,
   FiLoader,
@@ -122,6 +121,201 @@ function formatDate(date) {
   });
 }
 
+function ReservationSection({
+  title,
+  bookings,
+  dateField,
+  emptyTitle,
+  emptyDescription,
+}) {
+  return (
+    <section
+      className="
+        overflow-hidden
+        rounded-[28px]
+        border
+        border-black/8
+        bg-white/70
+      "
+    >
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          gap-4
+          border-b
+          border-black/8
+          p-6
+        "
+      >
+        <div>
+          <p
+            className="
+              text-[9px]
+              font-medium
+              uppercase
+              tracking-[0.2em]
+              text-black/35
+            "
+          >
+            Reservations
+          </p>
+
+          <h2
+            className="
+              mt-1
+              text-lg
+              font-medium
+              tracking-tight
+            "
+          >
+            {title}
+          </h2>
+        </div>
+
+        <Link
+          href="/admin/bookings"
+          className="
+            inline-flex
+            items-center
+            gap-1.5
+            text-xs
+            font-medium
+            text-black/45
+            transition
+            hover:text-black
+          "
+        >
+          View all
+          <FiChevronRight size={13} />
+        </Link>
+      </div>
+
+      <div className="divide-y divide-black/6">
+        {bookings.length === 0 ? (
+          <div className="px-6 py-14 text-center">
+            <p className="text-sm font-medium">
+              {emptyTitle}
+            </p>
+
+            <p className="mt-1 text-xs text-black/35">
+              {emptyDescription}
+            </p>
+          </div>
+        ) : (
+          bookings.map((booking) => (
+            <Link
+              key={booking.id}
+              href={`/admin/bookings/${booking.id}`}
+              className="
+                group
+                block
+                px-6
+                py-5
+                transition
+                hover:bg-black/[0.025]
+              "
+            >
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-4
+                  sm:flex-row
+                  sm:items-center
+                  sm:justify-between
+                "
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p
+                      className="
+                        text-sm
+                        font-medium
+                        text-[#11110f]
+                      "
+                    >
+                      {booking.guest}
+                    </p>
+
+                    <StatusBadge
+                      status={booking.status}
+                    />
+                  </div>
+
+                  <p className="mt-1 text-xs text-black/40">
+                    {booking.apartment}
+                  </p>
+                </div>
+
+                <div
+                  className="
+                    shrink-0
+                    text-left
+                    sm:text-right
+                  "
+                >
+                  <p
+                    className="
+                      text-xs
+                      font-medium
+                      text-black/55
+                    "
+                  >
+                    {formatDate(
+                      booking[dateField]
+                    )}
+                  </p>
+
+                  <p
+                    className="
+                      mt-1
+                      text-[10px]
+                      text-black/30
+                    "
+                  >
+                    {dateField === "checkIn"
+                      ? `Check-out ${formatDate(
+                          booking.checkOut
+                        )}`
+                      : `Check-in ${formatDate(
+                          booking.checkIn
+                        )}`}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className="
+                  mt-3
+                  flex
+                  items-center
+                  justify-between
+                  text-[10px]
+                  text-black/25
+                "
+              >
+                <span>{booking.displayId}</span>
+
+                <FiArrowUpRight
+                  size={13}
+                  className="
+                    transition-transform
+                    duration-300
+                    group-hover:translate-x-0.5
+                    group-hover:-translate-y-0.5
+                  "
+                />
+              </div>
+            </Link>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -179,7 +373,8 @@ export default function AdminDashboard() {
     {
       label: "Monthly Revenue",
       value:
-        data?.stats?.monthlyRevenue !== undefined
+        data?.stats?.monthlyRevenue !==
+        undefined
           ? `৳${data.stats.monthlyRevenue.toLocaleString()}`
           : "—",
       description: "This month",
@@ -187,22 +382,19 @@ export default function AdminDashboard() {
     },
   ];
 
-  const upcomingBookings =
-    data?.upcomingBookings || [];
+  // API already filters and sorts these.
+  const upcomingCheckIns =
+    data?.upcomingCheckIns || [];
+
+  const upcomingCheckOuts =
+    data?.upcomingCheckOuts || [];
 
   return (
     <main className="min-h-screen bg-[#f5f4f0] text-[#11110f]">
       {/* HEADER */}
-
       <section className="px-4 pb-8 pt-28 sm:px-6 lg:px-10 lg:pt-32">
         <div className="mx-auto max-w-7xl">
-          <div
-            className="
-              border-b
-              border-black/10
-              pb-8
-            "
-          >
+          <div className="border-b border-black/10 pb-8">
             <div>
               <p
                 className="
@@ -237,8 +429,9 @@ export default function AdminDashboard() {
                   text-black/45
                 "
               >
-                Manage your apartments, bookings and
-                availability from one place.
+                Manage your bookings and monitor
+                upcoming reservations from one
+                place.
               </p>
             </div>
           </div>
@@ -246,12 +439,9 @@ export default function AdminDashboard() {
       </section>
 
       {/* CONTENT */}
-
       <section className="px-4 pb-28 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-7xl">
-
           {/* ERROR */}
-
           {error && (
             <div
               className="
@@ -273,6 +463,7 @@ export default function AdminDashboard() {
               <span>{error}</span>
 
               <button
+                type="button"
                 onClick={loadDashboard}
                 className="ml-auto font-medium underline"
               >
@@ -282,7 +473,6 @@ export default function AdminDashboard() {
           )}
 
           {/* STATISTICS */}
-
           <div className="grid gap-4 sm:grid-cols-2">
             {stats.map((stat) => (
               <StatCard
@@ -292,205 +482,65 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* UPCOMING BOOKINGS */}
-
-          <section
-            className="
-              mt-6
-              overflow-hidden
-              rounded-[28px]
-              border
-              border-black/8
-              bg-white/70
-            "
-          >
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-                gap-4
-                border-b
-                border-black/8
-                p-6
-              "
-            >
-              <div>
-                <p
-                  className="
-                    text-[9px]
-                    font-medium
-                    uppercase
-                    tracking-[0.2em]
-                    text-black/35
-                  "
-                >
-                  Reservations
-                </p>
-
-                <h2
-                  className="
-                    mt-1
-                    text-lg
-                    font-medium
-                    tracking-tight
-                  "
-                >
-                  Upcoming bookings
-                </h2>
-              </div>
-
-              <Link
-                href="/admin/bookings"
+          {/* UPCOMING CHECK-INS */}
+          <div className="mt-6">
+            {loading ? (
+              <section
                 className="
-                  inline-flex
-                  items-center
-                  gap-1.5
-                  text-xs
-                  font-medium
-                  text-black/45
-                  transition
-                  hover:text-black
+                  overflow-hidden
+                  rounded-[28px]
+                  border
+                  border-black/8
+                  bg-white/70
                 "
               >
-                View all
-                <FiChevronRight size={13} />
-              </Link>
-            </div>
-
-            <div className="divide-y divide-black/6">
-              {loading ? (
                 <div className="flex items-center justify-center py-14">
                   <FiLoader
                     size={20}
                     className="animate-spin text-black/30"
                   />
                 </div>
-              ) : upcomingBookings.length === 0 ? (
-                <div className="px-6 py-14 text-center">
-                  <p className="text-sm font-medium">
-                    No upcoming bookings
-                  </p>
+              </section>
+            ) : (
+              <ReservationSection
+                title="Upcoming check-ins"
+                bookings={upcomingCheckIns}
+                dateField="checkIn"
+                emptyTitle="No upcoming check-ins"
+                emptyDescription="Upcoming check-ins will appear here."
+              />
+            )}
+          </div>
 
-                  <p className="mt-1 text-xs text-black/35">
-                    New reservations will appear here.
-                  </p>
+          {/* UPCOMING CHECK-OUTS */}
+          <div className="mt-6">
+            {loading ? (
+              <section
+                className="
+                  overflow-hidden
+                  rounded-[28px]
+                  border
+                  border-black/8
+                  bg-white/70
+                "
+              >
+                <div className="flex items-center justify-center py-14">
+                  <FiLoader
+                    size={20}
+                    className="animate-spin text-black/30"
+                  />
                 </div>
-              ) : (
-                upcomingBookings.map((booking) => (
-                  <Link
-                    key={booking.id}
-                    href={`/admin/bookings/${booking.id}`}
-                    className="
-                      group
-                      block
-                      px-6
-                      py-5
-                      transition
-                      hover:bg-black/[0.025]
-                    "
-                  >
-                    <div
-                      className="
-                        flex
-                        flex-col
-                        gap-4
-                        sm:flex-row
-                        sm:items-center
-                        sm:justify-between
-                      "
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p
-                            className="
-                              text-sm
-                              font-medium
-                              text-[#11110f]
-                            "
-                          >
-                            {booking.guest}
-                          </p>
-
-                          <StatusBadge
-                            status={booking.status}
-                          />
-                        </div>
-
-                        <p
-                          className="
-                            mt-1
-                            text-xs
-                            text-black/40
-                          "
-                        >
-                          {booking.apartment}
-                        </p>
-                      </div>
-
-                      <div
-                        className="
-                          shrink-0
-                          text-left
-                          sm:text-right
-                        "
-                      >
-                        <p
-                          className="
-                            text-xs
-                            font-medium
-                            text-black/55
-                          "
-                        >
-                          {formatDate(
-                            booking.checkIn
-                          )}
-                        </p>
-
-                        <p
-                          className="
-                            mt-1
-                            text-[10px]
-                            text-black/30
-                          "
-                        >
-                          Check-out{" "}
-                          {formatDate(
-                            booking.checkOut
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      className="
-                        mt-3
-                        flex
-                        items-center
-                        justify-between
-                        text-[10px]
-                        text-black/25
-                      "
-                    >
-                      <span>
-                        {booking.displayId}
-                      </span>
-
-                      <FiArrowUpRight
-                        size={13}
-                        className="
-                          transition-transform
-                          duration-300
-                          group-hover:translate-x-0.5
-                          group-hover:-translate-y-0.5
-                        "
-                      />
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </section>
+              </section>
+            ) : (
+              <ReservationSection
+                title="Upcoming check-outs"
+                bookings={upcomingCheckOuts}
+                dateField="checkOut"
+                emptyTitle="No upcoming check-outs"
+                emptyDescription="Upcoming check-outs will appear here."
+              />
+            )}
+          </div>
         </div>
       </section>
     </main>

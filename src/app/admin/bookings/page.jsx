@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+
 import {
   FiArrowUpRight,
   FiCheckCircle,
@@ -74,6 +75,7 @@ function getPaymentStatusLabel(status) {
 
 function StatusBadge({ type, status }) {
   let className = "border-black/10 bg-black/[0.04] text-black/50";
+
   const label =
     type === "booking"
       ? getBookingStatusLabel(status)
@@ -129,7 +131,9 @@ function StatCard({ label, value, icon: Icon, loading }) {
 }
 
 function SkeletonRows({ mobile = false }) {
-  return Array.from({ length: mobile ? 5 : 6 }).map((_, index) =>
+  return Array.from({
+    length: mobile ? 5 : 6,
+  }).map((_, index) =>
     mobile ? (
       <div
         key={index}
@@ -154,6 +158,7 @@ function SkeletonRows({ mobile = false }) {
         <div>
           <div className="h-3 w-28 animate-pulse rounded bg-black/5" />
           <div className="mt-2 h-3 w-24 animate-pulse rounded bg-black/5" />
+          <div className="mt-2 h-3 w-20 animate-pulse rounded bg-black/5" />
         </div>
 
         <div className="h-4 w-20 animate-pulse rounded bg-black/5" />
@@ -192,15 +197,14 @@ export default function AdminBookingsPage() {
   const observerRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
-  // Today's local date: YYYY-MM-DD
   const today = new Date();
+
   const todayString = [
     today.getFullYear(),
     String(today.getMonth() + 1).padStart(2, "0"),
     String(today.getDate()).padStart(2, "0"),
   ].join("-");
 
-  // Today's month: YYYY-MM
   const currentMonth = todayString.slice(0, 7);
 
   const fetchBookings = useCallback(
@@ -264,7 +268,8 @@ export default function AdminBookingsPage() {
         );
 
         setError(
-          fetchError?.message || "Failed to load bookings."
+          fetchError?.message ||
+            "Failed to load bookings."
         );
 
         if (!append) {
@@ -286,7 +291,6 @@ export default function AdminBookingsPage() {
     ]
   );
 
-  // Reload whenever filters change.
   useEffect(() => {
     clearTimeout(searchTimeoutRef.current);
 
@@ -297,7 +301,6 @@ export default function AdminBookingsPage() {
     return () => clearTimeout(searchTimeoutRef.current);
   }, [fetchBookings]);
 
-  // Infinite scroll.
   const loadMoreRef = useCallback(
     (node) => {
       if (!node || loading || loadingMore || !hasMore) return;
@@ -323,7 +326,13 @@ export default function AdminBookingsPage() {
 
       observerRef.current.observe(node);
     },
-    [loading, loadingMore, hasMore, page, fetchBookings]
+    [
+      loading,
+      loadingMore,
+      hasMore,
+      page,
+      fetchBookings,
+    ]
   );
 
   useEffect(() => {
@@ -437,7 +446,9 @@ export default function AdminBookingsPage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <StatCard
             label="Confirmed bookings"
-            value={stats.confirmedBookings.toLocaleString("en-BD")}
+            value={stats.confirmedBookings.toLocaleString(
+              "en-BD"
+            )}
             icon={FiCheckCircle}
             loading={loading}
           />
@@ -505,7 +516,9 @@ export default function AdminBookingsPage() {
                   const value = event.target.value;
 
                   setSelectedMonth(
-                    value > currentMonth ? currentMonth : value
+                    value > currentMonth
+                      ? currentMonth
+                      : value
                   );
                 }}
                 className="w-full rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20 focus:bg-white"
@@ -551,9 +564,14 @@ export default function AdminBookingsPage() {
         {error && (
           <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-red-500/15 bg-red-500/5 px-5 py-4">
             <div className="flex items-center gap-3">
-              <FiXCircle size={16} className="text-red-600" />
+              <FiXCircle
+                size={16}
+                className="text-red-600"
+              />
 
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700">
+                {error}
+              </p>
             </div>
 
             <button
@@ -597,6 +615,7 @@ export default function AdminBookingsPage() {
                     <p className="truncate text-sm font-medium">
                       {booking.guestName}
                     </p>
+
                     <p className="mt-1 truncate text-xs text-black/35">
                       {booking.email}
                     </p>
@@ -606,21 +625,39 @@ export default function AdminBookingsPage() {
                     <p className="truncate text-sm">
                       {booking.apartment}
                     </p>
+
                     <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-black/30">
                       Apartment
                     </p>
                   </div>
 
+                  {/* Stay */}
                   <div>
-                    <p className="text-xs text-black/65">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
+                      Check in
+                    </p>
+
+                    <p className="mt-1 text-xs text-black/65">
                       {formatDate(booking.checkIn)}
                     </p>
-                    <p className="mt-1 text-xs text-black/35">
-                      → {formatDate(booking.checkOut)}
+
+                    <p className="mt-3 text-[10px] uppercase tracking-[0.12em] text-black/30">
+                      Checkout
                     </p>
-                    <p className="mt-1 text-[10px] text-black/25">
+
+                    <p className="mt-1 text-xs text-black/65">
+                      {formatDate(booking.checkOut)}
+                    </p>
+
+                    <p className="mt-3 text-[10px] uppercase tracking-[0.12em] text-black/30">
+                      Stay
+                    </p>
+
+                    <p className="mt-1 text-xs text-black/50">
                       {booking.duration}{" "}
-                      {booking.duration === 1 ? "day" : "days"}
+                      {booking.duration === 1
+                        ? "day"
+                        : "days"}
                     </p>
                   </div>
 
@@ -642,15 +679,9 @@ export default function AdminBookingsPage() {
                     <p className="text-[11px] text-black/60">
                       Created
                     </p>
+
                     <p className="truncate text-[11px] text-black/40">
                       {formatDateTime(booking.createdAt)}
-                    </p>
-
-                    <p className="mt-2 text-[11px] text-black/60">
-                      Updated
-                    </p>
-                    <p className="truncate text-[11px] text-black/40">
-                      {formatDateTime(booking.updatedAt)}
                     </p>
                   </div>
 
@@ -673,11 +704,14 @@ export default function AdminBookingsPage() {
                 size={28}
                 className="mx-auto text-black/20"
               />
+
               <p className="mt-4 text-sm font-medium">
                 No paid bookings found
               </p>
+
               <p className="mt-1 text-xs text-black/35">
-                Try changing your search, status or date filter.
+                Try changing your search, status or date
+                filter.
               </p>
             </div>
           ) : (
@@ -692,6 +726,7 @@ export default function AdminBookingsPage() {
                     <p className="truncate text-sm font-medium">
                       {booking.guestName}
                     </p>
+
                     <p className="mt-1 truncate text-xs text-black/35">
                       {booking.email}
                     </p>
@@ -708,6 +743,7 @@ export default function AdminBookingsPage() {
                       <p className="text-xs text-black/40">
                         Apartment
                       </p>
+
                       <p className="mt-1 text-sm">
                         {booking.apartment}
                       </p>
@@ -718,21 +754,37 @@ export default function AdminBookingsPage() {
                     </p>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-xs text-black/40">
-                        Stay
+                  {/* Stay */}
+                  <div className="mt-4">
+                    <p className="text-xs text-black/40">
+                      Stay
+                    </p>
+
+                    <div className="mt-2 space-y-1.5 text-xs">
+                      <p>
+                        <span className="text-black/40">
+                          Check in -
+                        </span>{" "}
+                        {formatDate(booking.checkIn)}
                       </p>
-                      <p className="mt-1 text-xs">
-                        {formatDate(booking.checkIn)} →{" "}
+
+                      <p>
+                        <span className="text-black/40">
+                          Checkout -
+                        </span>{" "}
                         {formatDate(booking.checkOut)}
                       </p>
-                    </div>
 
-                    <p className="text-[10px] text-black/35">
-                      {booking.duration}{" "}
-                      {booking.duration === 1 ? "day" : "days"}
-                    </p>
+                      <p>
+                        <span className="text-black/40">
+                          Stay -
+                        </span>{" "}
+                        {booking.duration}{" "}
+                        {booking.duration === 1
+                          ? "day"
+                          : "days"}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -741,6 +793,7 @@ export default function AdminBookingsPage() {
                     type="booking"
                     status={booking.bookingStatus}
                   />
+
                   <StatusBadge
                     type="payment"
                     status={booking.paymentStatus}
@@ -753,17 +806,11 @@ export default function AdminBookingsPage() {
                       <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
                         Created
                       </p>
-                      <p className="mt-1 text-[11px] text-black/50">
-                        {formatDateTime(booking.createdAt)}
-                      </p>
-                    </div>
 
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
-                        Updated
-                      </p>
                       <p className="mt-1 text-[11px] text-black/50">
-                        {formatDateTime(booking.updatedAt)}
+                        {formatDateTime(
+                          booking.createdAt
+                        )}
                       </p>
                     </div>
                   </div>

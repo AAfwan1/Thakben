@@ -2,7 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import Image from "next/image";
+
 import {
   FiX,
   FiChevronLeft,
@@ -72,7 +74,10 @@ const FACILITIES = [
     ...facility,
     images:
       route?.images?.map((image) => {
-        const match = image.match(/\((https?:\/\/[^)]+)\)/);
+        const match = image.match(
+          /(?:\(|)(https?:\/\/[^)]+)(?:\)|)/
+        );
+
         return match ? match[1] : image;
       }) || [],
   };
@@ -125,26 +130,29 @@ export default function FacilitiesSection() {
         className="bg-[#111214] px-5 py-16 sm:px-8 lg:px-12"
       >
         <div className="mx-auto max-w-7xl">
+
           {/* HEADER */}
           <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-<div>
-  <p className="mb-3  text-xl font-medium uppercase tracking-[0.25em] text-blue-400">
-      Facilities
-  </p>
+            <div>
+              <p className="mb-3 text-xl font-medium uppercase tracking-[0.25em] text-blue-400">
+                Facilities
+              </p>
 
-  <Image
-    src="/checkpointR.webp"
-    alt="The Checkpoint"
-    width={400}
-    height={120}
-    className="h-auto w-[300px] object-contain mix-blend-screen"
-  />
-</div>
+              <Image
+                src="/checkpointR.webp"
+                alt="The Checkpoint"
+                width={400}
+                height={120}
+                className="h-auto w-[300px] object-contain mix-blend-screen"
+              />
+            </div>
 
-            <p className="max-w-md text-sm leading-6 text-white/45">
-              Visit the Checkpoint on 11th floor to experience our various
-              paid amenities
-            </p>
+            <div className="flex max-w-md flex-col items-start gap-4">
+              <p className="text-sm leading-6 text-white/45">
+                Visit the Checkpoint on 11th floor to experience
+                our various paid amenities
+              </p>
+            </div>
           </div>
 
           {/* FACILITIES GRID */}
@@ -156,6 +164,55 @@ export default function FacilitiesSection() {
                 onClick={() => openGallery(facility)}
               />
             ))}
+          </div>
+
+          {/* CHECKPOINT BUTTON */}
+          <div className="mt-10 flex justify-center">
+            <a
+              href="https://www.checkpoint.place"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
+                group
+                inline-flex
+                items-center
+                gap-3
+                rounded-full
+                border
+                border-white/10
+                bg-white/[0.06]
+                px-5
+                py-3
+                text-sm
+                font-medium
+                text-white
+                transition-all
+                duration-300
+                hover:bg-white/10
+                hover:border-white/20
+              "
+            >
+              Visit The Checkpoint
+
+              <span
+                className="
+                  flex
+                  h-7
+                  w-7
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-white
+                  text-black
+                  transition-transform
+                  duration-300
+                  group-hover:translate-x-0.5
+                  group-hover:-translate-y-0.5
+                "
+              >
+                <FiArrowUpRight size={14} />
+              </span>
+            </a>
           </div>
         </div>
       </section>
@@ -255,6 +312,7 @@ export default function FacilitiesSection() {
 }
 
 /* FACILITY CARD */
+
 function FacilityCard({ facility, onClick }) {
   const image = facility.images[0];
 
@@ -300,6 +358,7 @@ function FacilityCard({ facility, onClick }) {
 }
 
 /* GALLERY NAVIGATION BUTTON */
+
 function GalleryButton({ direction, onClick }) {
   const left = direction === "left";
 
