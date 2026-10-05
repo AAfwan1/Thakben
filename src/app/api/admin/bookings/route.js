@@ -1,4 +1,3 @@
- 
 import { NextResponse } from "next/server";
 
 import { connectDB } from "@/lib/mongodb";
@@ -10,12 +9,14 @@ export const runtime = "nodejs";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+
 const ALLOWED_BOOKING_STATUSES = [
   "pending",
   "confirmed",
   "cancelled",
   "completed",
 ];
+
 const ALLOWED_PAYMENT_STATUSES = [
   "unpaid",
   "paid",
@@ -23,6 +24,9 @@ const ALLOWED_PAYMENT_STATUSES = [
   "cancelled",
   "refunded",
 ];
+
+const UPCOMING_CHECK_IN_FILTER = "upcoming-checkins";
+const UPCOMING_CHECK_OUT_FILTER = "upcoming-checkouts";
 
 function formatBooking(booking) {
   const apartment = booking.apartmentId;
@@ -42,17 +46,13 @@ function formatBooking(booking) {
     phone: booking.guestPhone,
     apartment: apartment?.title || apartmentSize,
     apartmentSlug,
-
     checkIn: booking.checkIn,
     checkOut: booking.checkOut,
     duration: booking.days,
-
     amount: booking.totalPrice,
-
     bookingStatus: booking.status,
     paymentStatus: booking.paymentStatus,
     transactionId: booking.transactionId || null,
-
     createdAt: booking.createdAt,
     updatedAt: booking.updatedAt,
   };
@@ -97,12 +97,11 @@ function isValidMonthString(value) {
 
 /*
  * Creates a Bangladesh-time date boundary.
- *
- * Example:
- * 2026-10-04 -> 2026-10-04 00:00:00 UTC+06:00
  */
 function bangladeshStartOfDay(dateString) {
-  return new Date(`${dateString}T00:00:00+06:00`);
+  return new Date(
+    `${dateString}T00:00:00+06:00`
+  );
 }
 
 /*
@@ -110,6 +109,7 @@ function bangladeshStartOfDay(dateString) {
  */
 function bangladeshNextDay(dateString) {
   const date = bangladeshStartOfDay(dateString);
+
   date.setUTCDate(date.getUTCDate() + 1);
 
   return date;
@@ -117,19 +117,23 @@ function bangladeshNextDay(dateString) {
 
 /*
  * Returns the next month boundary.
- *
- * Example:
- * 2026-02 -> March 1, 2026 00:00:00 UTC+06:00
  */
 function bangladeshNextMonth(monthString) {
-  const [year, month] = monthString.split("-").map(Number);
+  const [year, month] = monthString
+    .split("-")
+    .map(Number);
 
   const nextMonth =
     month === 12
       ? `${year + 1}-01`
-      : `${year}-${String(month + 1).padStart(2, "0")}`;
+      : `${year}-${String(month + 1).padStart(
+          2,
+          "0"
+        )}`;
 
-  return new Date(`${nextMonth}-01T00:00:00+06:00`);
+  return new Date(
+    `${nextMonth}-01T00:00:00+06:00`
+  );
 }
 
 export async function GET(request) {
@@ -151,7 +155,9 @@ export async function GET(request) {
 
     await connectDB();
 
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(
+      request.url
+    );
 
     /*
      * Pagination
@@ -171,7 +177,10 @@ export async function GET(request) {
 
     const limit =
       Number.isFinite(limitParam) && limitParam > 0
-        ? Math.min(Math.floor(limitParam), MAX_LIMIT)
+        ? Math.min(
+            Math.floor(limitParam),
+            MAX_LIMIT
+          )
         : DEFAULT_LIMIT;
 
     /*
@@ -181,10 +190,14 @@ export async function GET(request) {
       searchParams.get("search")?.trim() || "";
 
     const bookingStatus =
-      searchParams.get("bookingStatus")?.trim() || "";
+      searchParams
+        .get("bookingStatus")
+        ?.trim() || "";
 
     const paymentStatus =
-      searchParams.get("paymentStatus")?.trim() || "";
+      searchParams
+        .get("paymentStatus")
+        ?.trim() || "";
 
     const month =
       searchParams.get("month")?.trim() || "";
@@ -198,31 +211,92 @@ export async function GET(request) {
     const filter = {};
 
     /*
-     * Booking status
+     * =====================================================
+     * BOOKING STATUS
+     * =====================================================
      */
+
     if (
       bookingStatus &&
-      ALLOWED_BOOKING_STATUSES.includes(bookingStatus)
+      ALLOWED_BOOKING_STATUSES.includes(
+        bookingStatus
+      )
     ) {
       filter.status = bookingStatus;
     }
 
     /*
-     * Payment status
+     * Upcoming check-ins
+     *
+     * Pending + confirmed bookings whose check-in
+     * date is today or later in Bangladesh time.
+     */
+    if (
+      bookingStatus ===
+      UPCOMING_CHECK_IN_FILTER
+    ) {
+      const today = getTodayInBangladesh();
+
+      filter.status = {
+        $in: ["pending", "confirmed"],
+      };
+
+      filter.checkIn = {
+        $gte: bangladeshStartOfDay(today),
+      };
+    }
+
+    /*
+     * Upcoming check-outs
+     *
+     * Pending + confirmed bookings whose check-out
+     * date is today or later in Bangladesh time.
+     */
+    if (
+      bookingStatus ===
+      UPCOMING_CHECK_OUT_FILTER
+    ) {
+      const today = getTodayInBangladesh();
+
+      filter.status = {
+        $in: ["pending", "confirmed"],
+      };
+
+      filter.checkOut = {
+        $gte: bangladeshStartOfDay(today),
+      };
+    }
+
+    /*
+     * =====================================================
+     * PAYMENT STATUS
+     * =====================================================
+     *
+     * Upcoming filters intentionally do NOT force
+     * paymentStatus=paid because the dashboard's
+     * upcoming reservations include pending bookings.
      */
     if (
       paymentStatus &&
-      ALLOWED_PAYMENT_STATUSES.includes(paymentStatus)
+      ALLOWED_PAYMENT_STATUSES.includes(
+        paymentStatus
+      )
     ) {
       filter.paymentStatus = paymentStatus;
     }
 
     /*
-     * Search
+     * =====================================================
+     * SEARCH
+     * =====================================================
      */
+
     if (search) {
       const searchRegex = new RegExp(
-        search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        search.replace(
+          /[.*+?^${}()|[\]\\]/g,
+          "\\$&"
+        ),
         "i"
       );
 
@@ -238,11 +312,12 @@ export async function GET(request) {
         });
       }
 
-      const matchingApartments = await Apartment.find({
-        $or: apartmentSearch,
-      })
-        .select("_id")
-        .lean();
+      const matchingApartments =
+        await Apartment.find({
+          $or: apartmentSearch,
+        })
+          .select("_id")
+          .lean();
 
       filter.$or = [
         { guestName: searchRegex },
@@ -267,25 +342,18 @@ export async function GET(request) {
      * DATE FILTERING
      * =====================================================
      *
-     * All date filtering uses Booking.createdAt.
+     * Normal date filtering uses Booking.createdAt.
      *
-     * Bangladesh timezone:
-     * UTC+06:00
+     * Upcoming filters additionally use checkIn/checkOut
+     * as defined above.
      */
 
     const today = getTodayInBangladesh();
 
     /*
      * Month filter
-     *
-     * Example:
-     * month=2026-02
-     *
-     * Includes:
-     * Feb 1 00:00:00
-     * through
-     * Mar 1 00:00:00 exclusive
      */
+
     if (month) {
       if (!isValidMonthString(month)) {
         return NextResponse.json(
@@ -325,17 +393,14 @@ export async function GET(request) {
 
     /*
      * Custom date range
-     *
-     * Example:
-     * fromDate=2025-02-03
-     * toDate=2026-03-04
-     *
-     * The entire "to" day is included.
      */
+
     if (fromDate || toDate) {
       if (
-        (fromDate && !isValidDateString(fromDate)) ||
-        (toDate && !isValidDateString(toDate))
+        (fromDate &&
+          !isValidDateString(fromDate)) ||
+        (toDate &&
+          !isValidDateString(toDate))
       ) {
         return NextResponse.json(
           {
@@ -389,11 +454,6 @@ export async function GET(request) {
       }
 
       if (toDate) {
-        /*
-         * Use the next day as an exclusive upper
-         * boundary so the entire selected "to" day
-         * is included.
-         */
         createdAt.$lt =
           bangladeshNextDay(toDate);
       }
@@ -403,42 +463,46 @@ export async function GET(request) {
 
     /*
      * =====================================================
+     * SORTING
+     * =====================================================
+     */
+
+    const sort =
+      bookingStatus ===
+      UPCOMING_CHECK_OUT_FILTER
+        ? { checkOut: 1 }
+        : { checkIn: 1 };
+
+    /*
+     * =====================================================
      * PAGINATED BOOKINGS
      * =====================================================
      */
 
     const skip = (page - 1) * limit;
 
-    const [bookings, total] = await Promise.all([
-      Booking.find(filter)
-        .select(
-          "_id guestName email guestPhone apartmentId checkIn checkOut days totalPrice status paymentStatus transactionId createdAt updatedAt"
-        )
-        .populate(
-          "apartmentId",
-          "size title"
-        )
-        .sort({checkIn: 1})
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+    const [bookings, total] =
+      await Promise.all([
+        Booking.find(filter)
+          .select(
+            "_id guestName email guestPhone apartmentId checkIn checkOut days totalPrice status paymentStatus transactionId createdAt updatedAt"
+          )
+          .populate(
+            "apartmentId",
+            "size title"
+          )
+          .sort(sort)
+          .skip(skip)
+          .limit(limit)
+          .lean(),
 
-      Booking.countDocuments(filter),
-    ]);
+        Booking.countDocuments(filter),
+      ]);
 
     /*
      * =====================================================
      * STATS
      * =====================================================
-     *
-     * Stats use the same filters as the booking list.
-     *
-     * Therefore changing the date filter changes:
-     *
-     * - Confirmed bookings
-     * - Paid revenue
-     *
-     * independently of pagination.
      */
 
     const statsFilter = {
@@ -446,27 +510,24 @@ export async function GET(request) {
     };
 
     /*
+     * Confirmed bookings use the same active filters.
+     */
+    const confirmedBookings =
+      await Booking.countDocuments({
+        ...statsFilter,
+        status: "confirmed",
+      });
+
+    /*
      * Revenue must always be based on paid bookings.
-     *
-     * The frontend already requests paymentStatus=paid,
-     * but this makes the revenue calculation explicit
-     * and safe.
      */
     const revenueFilter = {
       ...statsFilter,
       paymentStatus: "paid",
     };
 
-    const [
-      confirmedBookings,
-      paidRevenueResult,
-    ] = await Promise.all([
-      Booking.countDocuments({
-        ...statsFilter,
-        status: "confirmed",
-      }),
-
-      Booking.aggregate([
+    const paidRevenueResult =
+      await Booking.aggregate([
         {
           $match: revenueFilter,
         },
@@ -478,15 +539,17 @@ export async function GET(request) {
             },
           },
         },
-      ]),
-    ]);
+      ]);
 
     const paidRevenue =
       paidRevenueResult[0]?.revenue || 0;
 
     /*
-     * Format response
+     * =====================================================
+     * RESPONSE
+     * =====================================================
      */
+
     const formattedBookings =
       bookings.map(formatBooking);
 

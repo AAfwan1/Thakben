@@ -32,12 +32,15 @@ export async function GET() {
     ============================================================
     */
 
-    const activeBookings =
-      await Booking.countDocuments({
-        status: {
-          $in: ["pending", "confirmed"],
-        },
-      });
+const activeBookings =
+  await Booking.countDocuments({
+    status: {
+      $in: ["pending", "confirmed"],
+    },
+    checkOut: {
+      $gte: todayStart,
+    },
+  });
 
     /*
     ============================================================

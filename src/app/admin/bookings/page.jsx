@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -20,30 +19,43 @@ const INITIAL_STATS = {
   paidRevenue: 0,
 };
 
+const UPCOMING_FILTERS = [
+  "upcoming-checkins",
+  "upcoming-checkouts",
+];
+
 function formatDate(value) {
   if (!value) return "—";
 
-  return new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return new Date(value).toLocaleDateString(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }
+  );
 }
 
 function formatDateTime(value) {
   if (!value) return "—";
 
-  return new Date(value).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return new Date(value).toLocaleString(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }
+  );
 }
 
 function formatCurrency(amount = 0) {
-  return `৳${Number(amount || 0).toLocaleString("en-BD")}`;
+  return `৳${Number(amount || 0).toLocaleString(
+    "en-BD"
+  )}`;
 }
 
 function getBookingStatusLabel(status) {
@@ -74,17 +86,24 @@ function getPaymentStatusLabel(status) {
 }
 
 function StatusBadge({ type, status }) {
-  let className = "border-black/10 bg-black/[0.04] text-black/50";
+  let className =
+    "border-black/10 bg-black/[0.04] text-black/50";
 
   const label =
     type === "booking"
       ? getBookingStatusLabel(status)
       : getPaymentStatusLabel(status);
 
-  if (status === "confirmed" || status === "paid") {
+  if (
+    status === "confirmed" ||
+    status === "paid"
+  ) {
     className =
       "border-emerald-500/20 bg-emerald-500/10 text-emerald-700";
-  } else if (status === "pending" || status === "unpaid") {
+  } else if (
+    status === "pending" ||
+    status === "unpaid"
+  ) {
     className =
       "border-amber-500/20 bg-amber-500/10 text-amber-700";
   } else if (
@@ -104,7 +123,12 @@ function StatusBadge({ type, status }) {
   );
 }
 
-function StatCard({ label, value, icon: Icon, loading }) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  loading,
+}) {
   return (
     <div className="rounded-[24px] border border-black/8 bg-white/60 p-5">
       <div className="flex items-start justify-between gap-4">
@@ -123,7 +147,10 @@ function StatCard({ label, value, icon: Icon, loading }) {
         </div>
 
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/[0.04]">
-          <Icon size={16} className="text-black/50" />
+          <Icon
+            size={16}
+            className="text-black/50"
+          />
         </div>
       </div>
     </div>
@@ -162,7 +189,9 @@ function SkeletonRows({ mobile = false }) {
         </div>
 
         <div className="h-4 w-20 animate-pulse rounded bg-black/5" />
+
         <div className="h-6 w-20 animate-pulse rounded-full bg-black/5" />
+
         <div className="h-6 w-16 animate-pulse rounded-full bg-black/5" />
 
         <div>
@@ -181,59 +210,159 @@ export default function AdminBookingsPage() {
   const [stats, setStats] = useState(INITIAL_STATS);
 
   const [search, setSearch] = useState("");
-  const [bookingStatus, setBookingStatus] = useState("");
+  const [bookingStatus, setBookingStatus] =
+    useState("");
 
-  const [dateMode, setDateMode] = useState("all");
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [dateMode, setDateMode] =
+    useState("all");
+
+  const [selectedMonth, setSelectedMonth] =
+    useState("");
+
+  const [fromDate, setFromDate] =
+    useState("");
+
+  const [toDate, setToDate] =
+    useState("");
 
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] =
+    useState(false);
+
+  const [hasMore, setHasMore] =
+    useState(false);
+
   const [error, setError] = useState("");
+
+  const [urlFilterReady, setUrlFilterReady] =
+    useState(false);
 
   const observerRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+
+  /*
+   * Read the dashboard View All filter once
+   * from the URL.
+   */
+  useEffect(() => {
+    const params = new URLSearchParams(
+      window.location.search
+    );
+
+    const initialBookingStatus =
+      params.get("bookingStatus") || "";
+
+    if (
+      initialBookingStatus ===
+        "upcoming-checkins" ||
+      initialBookingStatus ===
+        "upcoming-checkouts" ||
+      initialBookingStatus === "confirmed" ||
+      initialBookingStatus === "pending" ||
+      initialBookingStatus === "cancelled" ||
+      initialBookingStatus === "completed"
+    ) {
+      setBookingStatus(
+        initialBookingStatus
+      );
+    }
+
+    setUrlFilterReady(true);
+  }, []);
 
   const today = new Date();
 
   const todayString = [
     today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
+    String(today.getMonth() + 1).padStart(
+      2,
+      "0"
+    ),
+    String(today.getDate()).padStart(
+      2,
+      "0"
+    ),
   ].join("-");
 
-  const currentMonth = todayString.slice(0, 7);
+  const currentMonth =
+    todayString.slice(0, 7);
 
   const fetchBookings = useCallback(
-    async ({ pageNumber = 1, append = false } = {}) => {
-      append ? setLoadingMore(true) : setLoading(true);
+    async ({
+      pageNumber = 1,
+      append = false,
+    } = {}) => {
+      append
+        ? setLoadingMore(true)
+        : setLoading(true);
+
       setError("");
 
       try {
         const params = new URLSearchParams({
           page: String(pageNumber),
           limit: "20",
-          paymentStatus: "paid",
         });
 
+        /*
+         * Normal booking filters continue to show
+         * paid bookings only.
+         *
+         * Upcoming filters intentionally include
+         * pending + confirmed reservations regardless
+         * of payment status.
+         */
+        const isUpcomingFilter =
+          UPCOMING_FILTERS.includes(
+            bookingStatus
+          );
+
+        if (!isUpcomingFilter) {
+          params.set(
+            "paymentStatus",
+            "paid"
+          );
+        }
+
         if (search.trim()) {
-          params.set("search", search.trim());
+          params.set(
+            "search",
+            search.trim()
+          );
         }
 
         if (bookingStatus) {
-          params.set("bookingStatus", bookingStatus);
+          params.set(
+            "bookingStatus",
+            bookingStatus
+          );
         }
 
-        if (dateMode === "month" && selectedMonth) {
-          params.set("month", selectedMonth);
+        if (
+          dateMode === "month" &&
+          selectedMonth
+        ) {
+          params.set(
+            "month",
+            selectedMonth
+          );
         }
 
         if (dateMode === "range") {
-          if (fromDate) params.set("fromDate", fromDate);
-          if (toDate) params.set("toDate", toDate);
+          if (fromDate) {
+            params.set(
+              "fromDate",
+              fromDate
+            );
+          }
+
+          if (toDate) {
+            params.set(
+              "toDate",
+              toDate
+            );
+          }
         }
 
         const response = await fetch(
@@ -244,22 +373,38 @@ export default function AdminBookingsPage() {
           }
         );
 
-        const data = await response.json();
+        const data =
+          await response.json();
 
-        if (!response.ok || !data.success) {
+        if (
+          !response.ok ||
+          !data.success
+        ) {
           throw new Error(
-            data.message || "Failed to load bookings."
+            data.message ||
+              "Failed to load bookings."
           );
         }
 
         setBookings((previous) =>
           append
-            ? [...previous, ...(data.bookings || [])]
+            ? [
+                ...previous,
+                ...(data.bookings || []),
+              ]
             : data.bookings || []
         );
 
-        setStats(data.stats || INITIAL_STATS);
-        setHasMore(Boolean(data.pagination?.hasMore));
+        setStats(
+          data.stats || INITIAL_STATS
+        );
+
+        setHasMore(
+          Boolean(
+            data.pagination?.hasMore
+          )
+        );
+
         setPage(pageNumber);
       } catch (fetchError) {
         console.error(
@@ -292,37 +437,58 @@ export default function AdminBookingsPage() {
   );
 
   useEffect(() => {
-    clearTimeout(searchTimeoutRef.current);
+    if (!urlFilterReady) return;
 
-    searchTimeoutRef.current = setTimeout(() => {
-      fetchBookings();
-    }, 300);
+    clearTimeout(
+      searchTimeoutRef.current
+    );
 
-    return () => clearTimeout(searchTimeoutRef.current);
-  }, [fetchBookings]);
+    searchTimeoutRef.current =
+      setTimeout(() => {
+        fetchBookings();
+      }, 300);
+
+    return () =>
+      clearTimeout(
+        searchTimeoutRef.current
+      );
+  }, [
+    fetchBookings,
+    urlFilterReady,
+  ]);
 
   const loadMoreRef = useCallback(
     (node) => {
-      if (!node || loading || loadingMore || !hasMore) return;
+      if (
+        !node ||
+        loading ||
+        loadingMore ||
+        !hasMore
+      ) {
+        return;
+      }
 
       observerRef.current?.disconnect();
 
-      observerRef.current = new IntersectionObserver(
-        ([entry]) => {
-          if (
-            entry.isIntersecting &&
-            !loading &&
-            !loadingMore &&
-            hasMore
-          ) {
-            fetchBookings({
-              pageNumber: page + 1,
-              append: true,
-            });
+      observerRef.current =
+        new IntersectionObserver(
+          ([entry]) => {
+            if (
+              entry.isIntersecting &&
+              !loading &&
+              !loadingMore &&
+              hasMore
+            ) {
+              fetchBookings({
+                pageNumber: page + 1,
+                append: true,
+              });
+            }
+          },
+          {
+            rootMargin: "500px",
           }
-        },
-        { rootMargin: "500px" }
-      );
+        );
 
       observerRef.current.observe(node);
     },
@@ -345,7 +511,9 @@ export default function AdminBookingsPage() {
     fetchBookings();
   };
 
-  const handleDateModeChange = (event) => {
+  const handleDateModeChange = (
+    event
+  ) => {
     const value = event.target.value;
 
     setDateMode(value);
@@ -360,7 +528,9 @@ export default function AdminBookingsPage() {
     }
   };
 
-  const handleFromDateChange = (event) => {
+  const handleFromDateChange = (
+    event
+  ) => {
     const value = event.target.value;
 
     if (value > todayString) {
@@ -375,7 +545,9 @@ export default function AdminBookingsPage() {
     }
   };
 
-  const handleToDateChange = (event) => {
+  const handleToDateChange = (
+    event
+  ) => {
     const value = event.target.value;
 
     if (value > todayString) {
@@ -383,13 +555,28 @@ export default function AdminBookingsPage() {
       return;
     }
 
-    if (fromDate && value < fromDate) {
+    if (
+      fromDate &&
+      value < fromDate
+    ) {
       setToDate(fromDate);
       return;
     }
 
     setToDate(value);
   };
+
+  const isUpcomingFilter =
+    UPCOMING_FILTERS.includes(
+      bookingStatus
+    );
+
+  const emptyTitle = isUpcomingFilter
+    ? bookingStatus ===
+      "upcoming-checkins"
+      ? "No upcoming check-ins found"
+      : "No upcoming check-outs found"
+    : "No paid bookings found";
 
   const emptyState = (
     <div className="px-6 py-20 text-center">
@@ -399,11 +586,12 @@ export default function AdminBookingsPage() {
       />
 
       <p className="mt-4 text-sm font-medium">
-        No paid bookings found
+        {emptyTitle}
       </p>
 
       <p className="mt-1 text-xs text-black/35">
-        Try changing your search, status or date filter.
+        Try changing your search, status or
+        date filter.
       </p>
     </div>
   );
@@ -423,20 +611,27 @@ export default function AdminBookingsPage() {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-black/45">
-              Manage paid apartment reservations, guest
-              details, booking status and payment information.
+              Manage apartment reservations,
+              guest details, booking status and
+              payment information.
             </p>
           </div>
 
           <button
             type="button"
             onClick={handleRefresh}
-            disabled={loading || loadingMore}
+            disabled={
+              loading || loadingMore
+            }
             className="inline-flex w-fit items-center gap-2 rounded-full border border-black/10 bg-white/60 px-4 py-2.5 text-xs font-medium transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <FiRefreshCw
               size={13}
-              className={loading ? "animate-spin" : ""}
+              className={
+                loading
+                  ? "animate-spin"
+                  : ""
+              }
             />
             Refresh
           </button>
@@ -455,7 +650,9 @@ export default function AdminBookingsPage() {
 
           <StatCard
             label="Paid revenue"
-            value={formatCurrency(stats.paidRevenue)}
+            value={formatCurrency(
+              stats.paidRevenue
+            )}
             icon={FiCreditCard}
             loading={loading}
           />
@@ -474,7 +671,9 @@ export default function AdminBookingsPage() {
                 type="text"
                 value={search}
                 onChange={(event) =>
-                  setSearch(event.target.value)
+                  setSearch(
+                    event.target.value
+                  )
                 }
                 placeholder="Search guest, email, phone, apartment..."
                 className="w-full rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 pl-11 text-sm outline-none transition placeholder:text-black/25 focus:border-black/20 focus:bg-white"
@@ -484,25 +683,59 @@ export default function AdminBookingsPage() {
             <select
               value={bookingStatus}
               onChange={(event) =>
-                setBookingStatus(event.target.value)
+                setBookingStatus(
+                  event.target.value
+                )
               }
               className="rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20"
             >
-              <option value="">All booking statuses</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="pending">Pending</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="completed">Completed</option>
+              <option value="">
+                All booking statuses
+              </option>
+
+              <option value="confirmed">
+                Confirmed
+              </option>
+
+              <option value="pending">
+                Pending
+              </option>
+
+              <option value="cancelled">
+                Cancelled
+              </option>
+
+              <option value="completed">
+                Completed
+              </option>
+
+              <option value="upcoming-checkins">
+                Upcoming Check-ins
+              </option>
+
+              <option value="upcoming-checkouts">
+                Upcoming Check-outs
+              </option>
             </select>
 
             <select
               value={dateMode}
-              onChange={handleDateModeChange}
+              onChange={
+                handleDateModeChange
+              }
               className="rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20"
             >
-              <option value="all">All dates</option>
-              <option value="month">Month & Year</option>
-              <option value="range">Custom date range</option>
+              <option value="all">
+                All dates
+              </option>
+
+              <option value="month">
+                Month & Year
+              </option>
+
+              <option value="range">
+                Custom date range
+              </option>
             </select>
           </div>
 
@@ -513,7 +746,8 @@ export default function AdminBookingsPage() {
                 value={selectedMonth}
                 max={currentMonth}
                 onChange={(event) => {
-                  const value = event.target.value;
+                  const value =
+                    event.target.value;
 
                   setSelectedMonth(
                     value > currentMonth
@@ -536,8 +770,13 @@ export default function AdminBookingsPage() {
                 <input
                   type="date"
                   value={fromDate}
-                  max={toDate || todayString}
-                  onChange={handleFromDateChange}
+                  max={
+                    toDate ||
+                    todayString
+                  }
+                  onChange={
+                    handleFromDateChange
+                  }
                   className="w-full rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20 focus:bg-white"
                 />
               </div>
@@ -550,9 +789,14 @@ export default function AdminBookingsPage() {
                 <input
                   type="date"
                   value={toDate}
-                  min={fromDate || undefined}
+                  min={
+                    fromDate ||
+                    undefined
+                  }
                   max={todayString}
-                  onChange={handleToDateChange}
+                  onChange={
+                    handleToDateChange
+                  }
                   className="w-full rounded-2xl border border-black/8 bg-white/70 px-4 py-3.5 text-sm outline-none transition focus:border-black/20 focus:bg-white"
                 />
               </div>
@@ -605,91 +849,107 @@ export default function AdminBookingsPage() {
             emptyState
           ) : (
             <div className="divide-y divide-black/6">
-              {bookings.map((booking) => (
-                <Link
-                  key={booking.id}
-                  href={`/admin/bookings/${booking.id}`}
-                  className="group grid grid-cols-[1.35fr_0.9fr_1.1fr_0.75fr_0.85fr_0.85fr_1.2fr_40px] items-center gap-4 px-6 py-5 transition hover:bg-black/[0.025]"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {booking.guestName}
+              {bookings.map(
+                (booking) => (
+                  <Link
+                    key={booking.id}
+                    href={`/admin/bookings/${booking.id}`}
+                    className="group grid grid-cols-[1.35fr_0.9fr_1.1fr_0.75fr_0.85fr_0.85fr_1.2fr_40px] items-center gap-4 px-6 py-5 transition hover:bg-black/[0.025]"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {booking.guestName}
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-black/35">
+                        {booking.email}
+                      </p>
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm">
+                        {booking.apartment}
+                      </p>
+
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-black/30">
+                        Apartment
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
+                        Check in
+                      </p>
+
+                      <p className="mt-1 text-xs text-black/65">
+                        {formatDate(
+                          booking.checkIn
+                        )}
+                      </p>
+
+                      <p className="mt-3 text-[10px] uppercase tracking-[0.12em] text-black/30">
+                        Checkout
+                      </p>
+
+                      <p className="mt-1 text-xs text-black/65">
+                        {formatDate(
+                          booking.checkOut
+                        )}
+                      </p>
+
+                      <p className="mt-3 text-[10px] uppercase tracking-[0.12em] text-black/30">
+                        Stay
+                      </p>
+
+                      <p className="mt-1 text-xs text-black/50">
+                        {booking.duration}{" "}
+                        {booking.duration ===
+                        1
+                          ? "day"
+                          : "days"}
+                      </p>
+                    </div>
+
+                    <p className="text-sm font-medium">
+                      {formatCurrency(
+                        booking.amount
+                      )}
                     </p>
 
-                    <p className="mt-1 truncate text-xs text-black/35">
-                      {booking.email}
-                    </p>
-                  </div>
+                    <StatusBadge
+                      type="booking"
+                      status={
+                        booking.bookingStatus
+                      }
+                    />
 
-                  <div className="min-w-0">
-                    <p className="truncate text-sm">
-                      {booking.apartment}
-                    </p>
+                    <StatusBadge
+                      type="payment"
+                      status={
+                        booking.paymentStatus
+                      }
+                    />
 
-                    <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-black/30">
-                      Apartment
-                    </p>
-                  </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-black/60">
+                        Created
+                      </p>
 
-                  {/* Stay */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
-                      Check in
-                    </p>
+                      <p className="truncate text-[11px] text-black/40">
+                        {formatDateTime(
+                          booking.createdAt
+                        )}
+                      </p>
+                    </div>
 
-                    <p className="mt-1 text-xs text-black/65">
-                      {formatDate(booking.checkIn)}
-                    </p>
-
-                    <p className="mt-3 text-[10px] uppercase tracking-[0.12em] text-black/30">
-                      Checkout
-                    </p>
-
-                    <p className="mt-1 text-xs text-black/65">
-                      {formatDate(booking.checkOut)}
-                    </p>
-
-                    <p className="mt-3 text-[10px] uppercase tracking-[0.12em] text-black/30">
-                      Stay
-                    </p>
-
-                    <p className="mt-1 text-xs text-black/50">
-                      {booking.duration}{" "}
-                      {booking.duration === 1
-                        ? "day"
-                        : "days"}
-                    </p>
-                  </div>
-
-                  <p className="text-sm font-medium">
-                    {formatCurrency(booking.amount)}
-                  </p>
-
-                  <StatusBadge
-                    type="booking"
-                    status={booking.bookingStatus}
-                  />
-
-                  <StatusBadge
-                    type="payment"
-                    status={booking.paymentStatus}
-                  />
-
-                  <div className="min-w-0">
-                    <p className="text-[11px] text-black/60">
-                      Created
-                    </p>
-
-                    <p className="truncate text-[11px] text-black/40">
-                      {formatDateTime(booking.createdAt)}
-                    </p>
-                  </div>
-
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-black/8 bg-white transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
-                    <FiArrowUpRight size={14} />
-                  </div>
-                </Link>
-              ))}
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-black/8 bg-white transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+                      <FiArrowUpRight
+                        size={14}
+                      />
+                    </div>
+                  </Link>
+                )
+              )}
             </div>
           )}
         </div>
@@ -706,145 +966,162 @@ export default function AdminBookingsPage() {
               />
 
               <p className="mt-4 text-sm font-medium">
-                No paid bookings found
+                {emptyTitle}
               </p>
 
               <p className="mt-1 text-xs text-black/35">
-                Try changing your search, status or date
-                filter.
+                Try changing your search,
+                status or date filter.
               </p>
             </div>
           ) : (
-            bookings.map((booking) => (
-              <Link
-                key={booking.id}
-                href={`/admin/bookings/${booking.id}`}
-                className="group block rounded-[24px] border border-black/8 bg-white/55 p-5 transition hover:bg-white"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {booking.guestName}
-                    </p>
-
-                    <p className="mt-1 truncate text-xs text-black/35">
-                      {booking.email}
-                    </p>
-                  </div>
-
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/8 bg-white">
-                    <FiArrowUpRight size={14} />
-                  </div>
-                </div>
-
-                <div className="mt-5 rounded-2xl bg-black/[0.025] p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-xs text-black/40">
-                        Apartment
+            bookings.map(
+              (booking) => (
+                <Link
+                  key={booking.id}
+                  href={`/admin/bookings/${booking.id}`}
+                  className="group block rounded-[24px] border border-black/8 bg-white/55 p-5 transition hover:bg-white"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {booking.guestName}
                       </p>
 
-                      <p className="mt-1 text-sm">
-                        {booking.apartment}
+                      <p className="mt-1 truncate text-xs text-black/35">
+                        {booking.email}
                       </p>
                     </div>
 
-                    <p className="text-sm font-medium">
-                      {formatCurrency(booking.amount)}
-                    </p>
-                  </div>
-
-                  {/* Stay */}
-                  <div className="mt-4">
-                    <p className="text-xs text-black/40">
-                      Stay
-                    </p>
-
-                    <div className="mt-2 space-y-1.5 text-xs">
-                      <p>
-                        <span className="text-black/40">
-                          Check in -
-                        </span>{" "}
-                        {formatDate(booking.checkIn)}
-                      </p>
-
-                      <p>
-                        <span className="text-black/40">
-                          Checkout -
-                        </span>{" "}
-                        {formatDate(booking.checkOut)}
-                      </p>
-
-                      <p>
-                        <span className="text-black/40">
-                          Stay -
-                        </span>{" "}
-                        {booking.duration}{" "}
-                        {booking.duration === 1
-                          ? "day"
-                          : "days"}
-                      </p>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/8 bg-white">
+                      <FiArrowUpRight
+                        size={14}
+                      />
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <StatusBadge
-                    type="booking"
-                    status={booking.bookingStatus}
-                  />
+                  <div className="mt-5 rounded-2xl bg-black/[0.025] p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs text-black/40">
+                          Apartment
+                        </p>
 
-                  <StatusBadge
-                    type="payment"
-                    status={booking.paymentStatus}
-                  />
-                </div>
+                        <p className="mt-1 text-sm">
+                          {booking.apartment}
+                        </p>
+                      </div>
 
-                <div className="mt-4 border-t border-black/6 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
-                        Created
-                      </p>
-
-                      <p className="mt-1 text-[11px] text-black/50">
-                        {formatDateTime(
-                          booking.createdAt
+                      <p className="text-sm font-medium">
+                        {formatCurrency(
+                          booking.amount
                         )}
                       </p>
                     </div>
+
+                    <div className="mt-4">
+                      <p className="text-xs text-black/40">
+                        Stay
+                      </p>
+
+                      <div className="mt-2 space-y-1.5 text-xs">
+                        <p>
+                          <span className="text-black/40">
+                            Check in -
+                          </span>{" "}
+                          {formatDate(
+                            booking.checkIn
+                          )}
+                        </p>
+
+                        <p>
+                          <span className="text-black/40">
+                            Checkout -
+                          </span>{" "}
+                          {formatDate(
+                            booking.checkOut
+                          )}
+                        </p>
+
+                        <p>
+                          <span className="text-black/40">
+                            Stay -
+                          </span>{" "}
+                          {booking.duration}{" "}
+                          {booking.duration ===
+                          1
+                            ? "day"
+                            : "days"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <StatusBadge
+                      type="booking"
+                      status={
+                        booking.bookingStatus
+                      }
+                    />
+
+                    <StatusBadge
+                      type="payment"
+                      status={
+                        booking.paymentStatus
+                      }
+                    />
+                  </div>
+
+                  <div className="mt-4 border-t border-black/6 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.12em] text-black/30">
+                          Created
+                        </p>
+
+                        <p className="mt-1 text-[11px] text-black/50">
+                          {formatDateTime(
+                            booking.createdAt
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            )
           )}
         </div>
 
         {/* Infinite-scroll sentinel */}
-        {!loading && bookings.length > 0 && (
-          <div
-            ref={loadMoreRef}
-            className="flex min-h-20 items-center justify-center"
-          >
-            {loadingMore ? (
-              <div className="flex items-center gap-2 text-xs text-black/35">
-                <FiLoader
-                  size={14}
-                  className="animate-spin"
-                />
-                Loading more bookings...
-              </div>
-            ) : hasMore ? (
-              <span className="text-[10px] text-black/20">
-                Scroll to load more
-              </span>
-            ) : (
-              <span className="text-[10px] text-black/20">
-                All paid bookings loaded
-              </span>
-            )}
-          </div>
-        )}
+        {!loading &&
+          bookings.length > 0 && (
+            <div
+              ref={loadMoreRef}
+              className="flex min-h-20 items-center justify-center"
+            >
+              {loadingMore ? (
+                <div className="flex items-center gap-2 text-xs text-black/35">
+                  <FiLoader
+                    size={14}
+                    className="animate-spin"
+                  />
+                  Loading more bookings...
+                </div>
+              ) : hasMore ? (
+                <span className="text-[10px] text-black/20">
+                  Scroll to load more
+                </span>
+              ) : (
+                <span className="text-[10px] text-black/20">
+                  {isUpcomingFilter
+                    ? "All upcoming bookings loaded"
+                    : "All paid bookings loaded"}
+                </span>
+              )}
+            </div>
+          )}
       </div>
     </main>
   );

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -112,21 +111,26 @@ function StatusBadge({ status }) {
 function formatDate(date) {
   if (!date) return "—";
 
-  const value = new Date(`${date}T00:00:00`);
+  const value = new Date(
+    `${date}T00:00:00`
+  );
 
-  return value.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return value.toLocaleDateString(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
 }
 
 function ReservationSection({
   title,
   bookings,
-  dateField,
   emptyTitle,
   emptyDescription,
+  viewAllHref,
 }) {
   return (
     <section
@@ -175,7 +179,7 @@ function ReservationSection({
         </div>
 
         <Link
-          href="/admin/bookings"
+          href={viewAllHref}
           className="
             inline-flex
             items-center
@@ -263,25 +267,24 @@ function ReservationSection({
                       text-black/55
                     "
                   >
+                    Check-in:{" "}
                     {formatDate(
-                      booking[dateField]
+                      booking.checkIn
                     )}
                   </p>
 
                   <p
                     className="
                       mt-1
-                      text-[10px]
-                      text-black/30
+                      text-xs
+                      font-medium
+                      text-black/55
                     "
                   >
-                    {dateField === "checkIn"
-                      ? `Check-out ${formatDate(
-                          booking.checkOut
-                        )}`
-                      : `Check-in ${formatDate(
-                          booking.checkIn
-                        )}`}
+                    Check-out:{" "}
+                    {formatDate(
+                      booking.checkOut
+                    )}
                   </p>
                 </div>
               </div>
@@ -296,7 +299,9 @@ function ReservationSection({
                   text-black/25
                 "
               >
-                <span>{booking.displayId}</span>
+                <span>
+                  {booking.displayId}
+                </span>
 
                 <FiArrowUpRight
                   size={13}
@@ -317,9 +322,14 @@ function ReservationSection({
 }
 
 export default function AdminDashboard() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [data, setData] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   async function loadDashboard() {
     try {
@@ -333,9 +343,13 @@ export default function AdminDashboard() {
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
-      if (!response.ok || !result.success) {
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         throw new Error(
           result.message ||
             "Failed to load dashboard"
@@ -366,8 +380,10 @@ export default function AdminDashboard() {
     {
       label: "Active Bookings",
       value:
-        data?.stats?.activeBookings ?? "—",
-      description: "Current reservations",
+        data?.stats?.activeBookings ??
+        "—",
+      description:
+        "Current reservations",
       icon: FiCalendar,
     },
     {
@@ -382,7 +398,6 @@ export default function AdminDashboard() {
     },
   ];
 
-  // API already filters and sorts these.
   const upcomingCheckIns =
     data?.upcomingCheckIns || [];
 
@@ -505,9 +520,9 @@ export default function AdminDashboard() {
               <ReservationSection
                 title="Upcoming check-ins"
                 bookings={upcomingCheckIns}
-                dateField="checkIn"
                 emptyTitle="No upcoming check-ins"
                 emptyDescription="Upcoming check-ins will appear here."
+                viewAllHref="/admin/bookings?bookingStatus=upcoming-checkins"
               />
             )}
           </div>
@@ -535,9 +550,9 @@ export default function AdminDashboard() {
               <ReservationSection
                 title="Upcoming check-outs"
                 bookings={upcomingCheckOuts}
-                dateField="checkOut"
                 emptyTitle="No upcoming check-outs"
                 emptyDescription="Upcoming check-outs will appear here."
+                viewAllHref="/admin/bookings?bookingStatus=upcoming-checkouts"
               />
             )}
           </div>
