@@ -15,7 +15,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/icon.png",
+        url: "/logo2.png",
         width: 512,
         height: 512,
         alt: "Thakben",
@@ -27,7 +27,7 @@ export const metadata = {
     card: "summary",
     title: "Thakben",
     description: "Thakben Apartment",
-    images: ["/icon.png"],
+    images: ["/logo2.png"],
   },
 };
 
