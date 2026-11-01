@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import {
   FiAlertCircle,
@@ -10,11 +11,13 @@ import {
   FiCheck,
   FiClock,
   FiCreditCard,
+  FiEdit2,
   FiHome,
   FiMail,
   FiMapPin,
   FiPhone,
   FiRefreshCw,
+  FiTrash2,
   FiUser,
   FiX,
 } from "react-icons/fi";
@@ -65,6 +68,34 @@ function formatStatus(status) {
   if (!status) return "Unknown";
 
   return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function toDateInputValue(dateString) {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function calculateStayDays(checkIn, checkOut) {
+  if (!checkIn || !checkOut) return 0;
+
+  const start = new Date(`${checkIn}T00:00:00.000Z`);
+  const end = new Date(`${checkOut}T00:00:00.000Z`);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime())
+  ) {
+    return 0;
+  }
+
+  return (end.getTime() - start.getTime()) / 86400000;
 }
 
 /* ==========================================================
@@ -120,10 +151,12 @@ function ConfirmModal({
   type,
   booking,
   loading,
+  error,
   onClose,
   onConfirm,
 }) {
   const isCancel = type === "cancel";
+  const isDelete = type === "delete";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 backdrop-blur-md">
@@ -137,13 +170,15 @@ function ConfirmModal({
             justify-center
             rounded-2xl
             ${
-              isCancel
+              isCancel || isDelete
                 ? "bg-red-500/10 text-red-400"
                 : "bg-emerald-500/10 text-emerald-400"
             }
           `}
         >
-          {isCancel ? (
+          {isDelete ? (
+            <FiTrash2 size={20} />
+          ) : isCancel ? (
             <FiAlertCircle size={20} />
           ) : (
             <FiRefreshCw size={20} />
@@ -151,18 +186,28 @@ function ConfirmModal({
         </div>
 
         <h2 className="mt-5 text-xl font-semibold tracking-tight">
-          {isCancel
-            ? "Cancel this booking?"
-            : "Mark payment as refunded?"}
+          {isDelete
+            ? "Delete this booking permanently?"
+            : isCancel
+              ? "Cancel this booking?"
+              : "Mark payment as refunded?"}
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-white/50">
-          {isCancel
-            ? `This will cancel ${booking.guestName}'s booking. No automatic refund will be made.`
-            : `Confirm that you have manually refunded ${formatCurrency(
-                booking.totalPrice
-              )} to ${booking.guestName}.`}
+          {isDelete
+            ? `This will permanently delete ${booking.guestName}'s booking record. This action cannot be undone. Related payment records will not be deleted.`
+            : isCancel
+              ? `This will cancel ${booking.guestName}'s booking. No automatic refund will be made.`
+              : `Confirm that you have manually refunded ${formatCurrency(
+                  booking.totalPrice
+                )} to ${booking.guestName}.`}
         </p>
+
+        {error && (
+          <p className="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-xs leading-5 text-red-300">
+            {error}
+          </p>
+        )}
 
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <div className="flex items-center justify-between">
@@ -233,7 +278,7 @@ function ConfirmModal({
               disabled:cursor-not-allowed
               disabled:opacity-50
               ${
-                isCancel
+                isCancel || isDelete
                   ? "bg-red-500 !text-white hover:bg-red-600"
                   : "bg-[#f5f4f0] !text-[#11110f] hover:bg-white"
               }
@@ -246,6 +291,11 @@ function ConfirmModal({
                   className="animate-spin"
                 />
                 Processing...
+              </>
+            ) : isDelete ? (
+              <>
+                <FiTrash2 size={14} />
+                Delete Permanently
               </>
             ) : isCancel ? (
               <>
@@ -376,6 +426,7 @@ function IdentityDocuments({ booking }) {
 ========================================================== */
 
 export default function BookingDetailsPage({ params }) {
+  const router = useRouter();
   const { id } = use(params);
 
   const [booking, setBooking] = useState(null);
@@ -386,6 +437,17 @@ export default function BookingDetailsPage({ params }) {
   const [savedMessage, setSavedMessage] =
     useState("");
   const [modal, setModal] = useState(null);
+  const [actionError, setActionError] = useState("");
+
+  // Rescheduling state
+  const [showReschedule, setShowReschedule] =
+    useState(false);
+  const [newCheckIn, setNewCheckIn] = useState("");
+  const [newCheckOut, setNewCheckOut] = useState("");
+  const [rescheduleLoading, setRescheduleLoading] =
+    useState(false);
+  const [rescheduleError, setRescheduleError] =
+    useState("");
 
   /* ========================================================
      LOAD BOOKING
@@ -543,6 +605,144 @@ export default function BookingDetailsPage({ params }) {
   }
 
   /* ========================================================
+     RESCHEDULE BOOKING
+  ======================================================== */
+
+  function openReschedule() {
+    setNewCheckIn(
+      toDateInputValue(booking.checkIn)
+    );
+
+    setNewCheckOut(
+      toDateInputValue(booking.checkOut)
+    );
+
+    setRescheduleError("");
+    setShowReschedule(true);
+  }
+
+  async function rescheduleBooking() {
+    if (
+      !newCheckIn ||
+      !newCheckOut ||
+      newDays < 1 ||
+      newPricePerDay === null
+    ) {
+      setRescheduleError(
+        "Please select valid dates with an available pricing tier."
+      );
+      return;
+    }
+
+    try {
+      setRescheduleLoading(true);
+      setRescheduleError("");
+
+      const response = await fetch(
+        `/api/admin/bookings/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            action: "reschedule",
+            checkIn: newCheckIn,
+            checkOut: newCheckOut,
+          }),
+        }
+      );
+
+      const text = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          "Invalid response from booking API."
+        );
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+            "Failed to reschedule booking."
+        );
+      }
+
+      setBooking(data.booking);
+      setShowReschedule(false);
+
+      showMessage(
+        "Booking rescheduled successfully"
+      );
+    } catch (err) {
+      console.error(
+        "Reschedule booking error:",
+        err
+      );
+
+      setRescheduleError(
+        err.message ||
+          "Failed to reschedule booking."
+      );
+    } finally {
+      setRescheduleLoading(false);
+    }
+  }
+
+  /* ========================================================
+     PERMANENTLY DELETE BOOKING
+  ======================================================== */
+
+  async function deleteBooking() {
+    try {
+      setActionLoading(true);
+      setActionError("");
+
+      const response = await fetch(
+        `/api/admin/bookings/${id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          cache: "no-store",
+        }
+      );
+
+      const text = await response.text();
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          "Invalid response from booking API."
+        );
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Failed to delete booking."
+        );
+      }
+
+      setModal(null);
+      router.replace("/admin/bookings");
+    } catch (err) {
+      console.error("Delete booking error:", err);
+
+      setActionError(
+        err.message || "Failed to delete booking."
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  /* ========================================================
      LOADING
   ======================================================== */
 
@@ -621,6 +821,36 @@ export default function BookingDetailsPage({ params }) {
       : "");
 
   /* ========================================================
+     RESCHEDULE PRICE PREVIEW
+  ======================================================== */
+
+  const newDays = calculateStayDays(
+    newCheckIn,
+    newCheckOut
+  );
+
+  const selectedPricing =
+    apartment?.pricing?.find(
+      (tier) =>
+        newDays >= tier.minDays &&
+        (tier.maxDays == null ||
+          newDays <= tier.maxDays)
+    );
+
+  const newPricePerDay =
+    selectedPricing?.pricePerDay ?? null;
+
+  const newTotalPrice =
+    newPricePerDay !== null && newDays > 0
+      ? newPricePerDay * newDays
+      : null;
+
+  const priceDifference =
+    newTotalPrice !== null
+      ? newTotalPrice - Number(booking.totalPrice || 0)
+      : null;
+
+  /* ========================================================
      ACTION CONDITIONS
   ======================================================== */
 
@@ -635,6 +865,10 @@ export default function BookingDetailsPage({ params }) {
   const canRefund =
     booking.paymentStatus === "paid" &&
     booking.status === "cancelled";
+
+  const canReschedule =
+    booking.status !== "cancelled" &&
+    booking.status !== "completed";
 
   /* ========================================================
      RENDER
@@ -882,6 +1116,228 @@ export default function BookingDetailsPage({ params }) {
 
                 </div>
               </section>
+
+              {/* RESCHEDULE FORM */}
+
+              {showReschedule && (
+                <section className="rounded-[28px] border border-black/8 bg-white/70 p-6 sm:p-7">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black/5 text-black/45">
+                        <FiEdit2 size={17} />
+                      </div>
+
+                      <div>
+                        <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-black/35">
+                          Admin
+                        </p>
+
+                        <h2 className="mt-1 text-lg font-semibold tracking-tight">
+                          Reschedule Booking
+                        </h2>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowReschedule(false);
+                        setRescheduleError("");
+                      }}
+                      disabled={rescheduleLoading}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-black/8 text-black/40 transition hover:bg-black/5 hover:text-black disabled:opacity-50"
+                      aria-label="Close reschedule form"
+                    >
+                      <FiX size={16} />
+                    </button>
+                  </div>
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="newCheckIn"
+                        className="mb-2 block text-[10px] font-medium uppercase tracking-[0.12em] text-black/40"
+                      >
+                        New Check-in
+                      </label>
+
+                      <input
+                        id="newCheckIn"
+                        type="date"
+                        value={newCheckIn}
+                        onChange={(e) =>
+                          setNewCheckIn(e.target.value)
+                        }
+                        disabled={rescheduleLoading}
+                        className="w-full rounded-xl border border-black/10 bg-[#f8f7f3] px-4 py-3 text-sm font-medium outline-none transition focus:border-black/30 disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="newCheckOut"
+                        className="mb-2 block text-[10px] font-medium uppercase tracking-[0.12em] text-black/40"
+                      >
+                        New Check-out
+                      </label>
+
+                      <input
+                        id="newCheckOut"
+                        type="date"
+                        min={newCheckIn || undefined}
+                        value={newCheckOut}
+                        onChange={(e) =>
+                          setNewCheckOut(e.target.value)
+                        }
+                        disabled={rescheduleLoading}
+                        className="w-full rounded-xl border border-black/10 bg-[#f8f7f3] px-4 py-3 text-sm font-medium outline-none transition focus:border-black/30 disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-black/8 bg-[#f8f7f3] p-5">
+                    <p className="text-[9px] font-medium uppercase tracking-[0.15em] text-black/35">
+                      Updated Price Preview
+                    </p>
+
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-xs text-black/45">
+                          Duration
+                        </span>
+
+                        <span className="text-sm font-semibold">
+                          {newDays > 0
+                            ? `${newDays} ${
+                                newDays === 1
+                                  ? "day"
+                                  : "days"
+                              }`
+                            : "—"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-xs text-black/45">
+                          Price per day
+                        </span>
+
+                        <span className="text-sm font-semibold">
+                          {newPricePerDay !== null
+                            ? formatCurrency(newPricePerDay)
+                            : "No matching price"}
+                        </span>
+                      </div>
+
+                      <div className="h-px bg-black/8" />
+
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-xs text-black/45">
+                          Current total
+                        </span>
+
+                        <span className="text-sm font-semibold">
+                          {formatCurrency(booking.totalPrice)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-xs text-black/45">
+                          New total
+                        </span>
+
+                        <span className="text-lg font-semibold">
+                          {newTotalPrice !== null
+                            ? formatCurrency(newTotalPrice)
+                            : "—"}
+                        </span>
+                      </div>
+
+                      {priceDifference !== null && (
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-xs text-black/45">
+                            Price difference
+                          </span>
+
+                          <span
+                            className={`text-sm font-semibold ${
+                              priceDifference > 0
+                                ? "text-red-600"
+                                : priceDifference < 0
+                                  ? "text-emerald-700"
+                                  : "text-black/60"
+                            }`}
+                          >
+                            {priceDifference > 0
+                              ? "+"
+                              : priceDifference < 0
+                                ? "−"
+                                : ""}
+                            {formatCurrency(
+                              Math.abs(priceDifference)
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="mt-4 text-[11px] leading-5 text-black/40">
+                    The booking total will be updated using
+                    the apartment's pricing tiers. Any
+                    additional payment or refund difference
+                    must be handled separately.
+                  </p>
+
+                  {rescheduleError && (
+                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs leading-5 text-red-600">
+                      {rescheduleError}
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowReschedule(false);
+                        setRescheduleError("");
+                      }}
+                      disabled={rescheduleLoading}
+                      className="flex flex-1 items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-3.5 text-xs font-semibold text-black/55 transition hover:bg-black/5 disabled:opacity-50"
+                    >
+                      Keep Current Dates
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={rescheduleBooking}
+                      disabled={
+                        rescheduleLoading ||
+                        !newCheckIn ||
+                        !newCheckOut ||
+                        newDays < 1 ||
+                        newPricePerDay === null
+                      }
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#11110f] px-4 py-3.5 text-xs font-semibold !text-white transition hover:bg-[#252522] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {rescheduleLoading ? (
+                        <>
+                          <FiRefreshCw
+                            size={14}
+                            className="animate-spin"
+                          />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FiCheck size={14} />
+                          Save New Dates
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </section>
+              )}
 
               {/* APARTMENT */}
 
@@ -1250,6 +1706,40 @@ export default function BookingDetailsPage({ params }) {
 
                 <div className="mt-4 space-y-2">
 
+                  {canReschedule && (
+                    <button
+                      type="button"
+                      onClick={openReschedule}
+                      disabled={
+                        actionLoading ||
+                        rescheduleLoading
+                      }
+                      className="
+                        flex
+                        w-full
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-xl
+                        border
+                        border-black/10
+                        bg-white
+                        px-4
+                        py-3.5
+                        text-xs
+                        font-semibold
+                        text-black/70
+                        transition
+                        hover:bg-black/5
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                      "
+                    >
+                      <FiEdit2 size={14} />
+                      Reschedule Booking
+                    </button>
+                  )}
+
                   {canConfirm && (
                     <button
                       type="button"
@@ -1321,20 +1811,37 @@ export default function BookingDetailsPage({ params }) {
                     </button>
                   )}
 
-                  {!canConfirm &&
-                    !canCancel &&
-                    !canRefund && (
-                      <div className="rounded-xl border border-black/8 bg-[#f8f7f3] px-4 py-4 text-center">
-                        <p className="text-xs font-medium text-black/60">
-                          No actions available
-                        </p>
-
-                        <p className="mt-1 text-[10px] text-black/35">
-                          This booking has no available
-                          actions.
-                        </p>
-                      </div>
-                    )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActionError("");
+                      setModal("delete");
+                    }}
+                    disabled={actionLoading}
+                    className="
+                      flex
+                      w-full
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-xl
+                      border
+                      border-red-200
+                      bg-white
+                      px-4
+                      py-3.5
+                      text-xs
+                      font-semibold
+                      !text-red-600
+                      transition
+                      hover:bg-red-50
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
+                  >
+                    <FiTrash2 size={14} />
+                    Delete Booking Permanently
+                  </button>
 
                 </div>
               </section>
@@ -1432,13 +1939,17 @@ export default function BookingDetailsPage({ params }) {
           type={modal}
           booking={booking}
           loading={actionLoading}
+          error={actionError}
           onClose={() => {
             if (!actionLoading) {
               setModal(null);
+              setActionError("");
             }
           }}
           onConfirm={() =>
-            updateBooking(modal)
+            modal === "delete"
+              ? deleteBooking()
+              : updateBooking(modal)
           }
         />
       )}
